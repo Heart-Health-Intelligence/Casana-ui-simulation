@@ -16,6 +16,7 @@ $currentPage = isset($currentPage) ? $currentPage : '';
 $appName = isset($appName) ? $appName : '';
 $bodyClass = isset($bodyClass) ? $bodyClass : '';
 $hideNav = isset($hideNav) ? $hideNav : false;
+$providerId = isset($providerId) ? $providerId : (isset($_GET['id']) ? intval($_GET['id']) : 1);
 
 // Base path calculation for assets
 $basePath = '';
@@ -68,16 +69,19 @@ if (strpos($_SERVER['REQUEST_URI'], '/user/') !== false) {
 </head>
 <body class="<?php echo htmlspecialchars($bodyClass); ?>" data-app="<?php echo htmlspecialchars($appName); ?>">
 
+<!-- Skip Navigation Link (Accessibility) -->
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
 <?php if (!$hideNav): ?>
 <!-- Top Navigation Bar -->
-<nav class="navbar navbar-expand-lg sticky-top">
+<nav class="navbar navbar-expand-md sticky-top">
     <div class="container-fluid">
         <a class="navbar-brand d-flex align-items-center gap-2" href="<?php echo $basePath; ?>/index.php">
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="16" cy="16" r="14" fill="#6A6EFF"/>
+            <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="16" cy="16" r="14" fill="#5b5fef"/>
                 <path d="M16 8C16 8 10 14 10 18C10 21.3137 12.6863 24 16 24C19.3137 24 22 21.3137 22 18C22 14 16 8 16 8Z" fill="white"/>
             </svg>
-            <span>Casana</span>
+            <span class="fw-bold tracking-tight">Casana</span>
             <?php if ($appName): ?>
             <span class="badge bg-info-soft text-primary-brand ms-2"><?php echo ucfirst($appName); ?></span>
             <?php endif; ?>
@@ -98,35 +102,30 @@ if (strpos($_SERVER['REQUEST_URI'], '/user/') !== false) {
                 </li>
             </ul>
             <?php elseif ($appName === 'provider'): ?>
-            <!-- Provider Navigation -->
-            <ul class="navbar-nav me-auto">
-                <li class="nav-item">
-                    <a class="nav-link <?php echo $currentPage === 'dashboard' ? 'active' : ''; ?>" href="index.php">
-                        <i class="bi bi-grid-1x2 me-1"></i> Dashboard
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link <?php echo $currentPage === 'patients' ? 'active' : ''; ?>" href="patients.php">
-                        <i class="bi bi-people me-1"></i> Patients
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link <?php echo $currentPage === 'alerts' ? 'active' : ''; ?>" href="alerts.php">
-                        <i class="bi bi-exclamation-triangle me-1"></i> Alerts
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link <?php echo $currentPage === 'analytics' ? 'active' : ''; ?>" href="analytics.php">
-                        <i class="bi bi-graph-up me-1"></i> Analytics
-                    </a>
-                </li>
-            </ul>
+            <!-- Provider: Global patient search (sidebar handles main nav) -->
+            <div class="navbar-nav me-auto">
+                <form class="provider-search-form d-none d-md-flex position-relative" role="search" onsubmit="return handlePatientSearch(event);">
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0">
+                            <i class="bi bi-search text-muted"></i>
+                        </span>
+                        <input type="search" 
+                               class="form-control border-start-0 ps-0" 
+                               id="globalPatientSearch"
+                               placeholder="Search patients..." 
+                               aria-label="Search patients"
+                               autocomplete="off">
+                    </div>
+                    <!-- Search results dropdown (populated by JavaScript) -->
+                    <div class="global-search-results" id="globalSearchResults" role="listbox" aria-label="Search results"></div>
+                </form>
+            </div>
             <?php elseif ($appName === 'monitor'): ?>
             <!-- Monitor Navigation -->
             <ul class="navbar-nav me-auto">
                 <li class="nav-item">
                     <a class="nav-link <?php echo $currentPage === 'dashboard' ? 'active' : ''; ?>" href="index.php">
-                        <i class="bi bi-house me-1"></i> Home
+                        <i class="bi bi-people-fill me-1"></i> Family
                     </a>
                 </li>
             </ul>
@@ -134,22 +133,22 @@ if (strpos($_SERVER['REQUEST_URI'], '/user/') !== false) {
             <!-- User Navigation -->
             <ul class="navbar-nav me-auto">
                 <li class="nav-item">
-                    <a class="nav-link <?php echo $currentPage === 'dashboard' ? 'active' : ''; ?>" href="index.php">
-                        <i class="bi bi-house me-1"></i> Home
+                    <a class="nav-link <?php echo $currentPage === 'dashboard' ? 'active' : ''; ?>" href="index.php?id=<?php echo $userId; ?>">
+                        <i class="bi bi-house me-1"></i> Dashboard
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <?php echo $currentPage === 'history' ? 'active' : ''; ?>" href="history.php">
+                    <a class="nav-link <?php echo $currentPage === 'history' ? 'active' : ''; ?>" href="history.php?id=<?php echo $userId; ?>">
                         <i class="bi bi-clock-history me-1"></i> History
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <?php echo $currentPage === 'trends' ? 'active' : ''; ?>" href="trends.php">
+                    <a class="nav-link <?php echo $currentPage === 'trends' ? 'active' : ''; ?>" href="trends.php?id=<?php echo $userId; ?>">
                         <i class="bi bi-graph-up me-1"></i> Trends
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <?php echo $currentPage === 'settings' ? 'active' : ''; ?>" href="settings.php">
+                    <a class="nav-link <?php echo $currentPage === 'settings' ? 'active' : ''; ?>" href="settings.php?id=<?php echo $userId; ?>">
                         <i class="bi bi-gear me-1"></i> Settings
                     </a>
                 </li>
@@ -158,20 +157,27 @@ if (strpos($_SERVER['REQUEST_URI'], '/user/') !== false) {
             
             <div class="d-flex align-items-center gap-3">
                 <!-- Theme Toggle -->
-                <div class="theme-toggle" role="button" aria-label="Toggle dark mode">
+                <button class="theme-toggle" type="button" aria-label="Toggle dark mode" title="Toggle dark mode">
                     <span class="theme-toggle-icon sun-icon">
                         <i class="bi bi-sun"></i>
                     </span>
                     <span class="theme-toggle-icon moon-icon">
                         <i class="bi bi-moon"></i>
                     </span>
-                </div>
+                </button>
                 
-                <?php if ($appName && $appName !== 'superuser'): ?>
+                <?php if ($appName && $appName !== 'superuser' && $appName !== 'monitor' && $appName !== 'provider'): ?>
                 <!-- Back to Superuser -->
-                <a href="<?php echo $basePath; ?>/index.php" class="btn btn-outline-primary btn-sm">
-                    <i class="bi bi-arrow-left me-1"></i> Switch Role
+                <a href="<?php echo $basePath; ?>/index.php" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                    Switch Role
                 </a>
+                <?php endif; ?>
+                
+                <?php if ($appName === 'provider'): ?>
+                <!-- Mobile menu toggle for sidebar -->
+                <button class="btn btn-outline-secondary d-md-none" type="button" onclick="toggleProviderSidebar()" aria-label="Toggle navigation menu">
+                    <i class="bi bi-list"></i>
+                </button>
                 <?php endif; ?>
             </div>
         </div>
@@ -179,4 +185,4 @@ if (strpos($_SERVER['REQUEST_URI'], '/user/') !== false) {
 </nav>
 <?php endif; ?>
 
-<main class="<?php echo $appName === 'provider' ? 'main-with-sidebar' : ''; ?>">
+<main id="main-content" class="<?php echo $appName === 'provider' ? 'main-with-sidebar' : ''; ?>" role="main">

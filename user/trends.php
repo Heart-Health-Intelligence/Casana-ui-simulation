@@ -24,10 +24,13 @@ require_once __DIR__ . '/../includes/header.php';
 
 <div class="container py-4" style="max-width: 1000px;">
     <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-4 gap-3">
         <div>
-            <h1 class="mb-1">Your Health Trends</h1>
-            <p class="text-muted mb-0">See how your health has changed over time</p>
+            <h1 class="mb-1 h2 fw-bold" style="letter-spacing: -0.02em;">Your Health Trends</h1>
+            <p class="text-muted mb-0 d-flex align-items-center gap-2">
+                <i class="bi bi-graph-up-arrow"></i>
+                See how your health has changed over time
+            </p>
         </div>
         <div class="time-selector">
             <button class="time-option active" data-days="30" onclick="setPeriod(30)">30 Days</button>
@@ -95,8 +98,8 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="col-6 col-lg-3">
             <div class="card text-center py-4 h-100">
                 <div class="small text-muted mb-1">Total Readings</div>
-                <div class="fs-2 fw-bold"><?php echo $totalReadings; ?></div>
-                <div class="small text-muted">in 30 days</div>
+                <div class="fs-2 fw-bold" id="totalReadingsValue"><?php echo $totalReadings; ?></div>
+                <div class="small text-muted" id="totalReadingsPeriod">in 30 days</div>
             </div>
         </div>
     </div>
@@ -271,22 +274,53 @@ function setPeriod(days) {
     charts = {};
     
     initCharts(data);
+    
+    // Update summary card period text
+    const periodEl = document.getElementById('totalReadingsPeriod');
+    if (periodEl) {
+        periodEl.textContent = 'in ' + days + ' days';
+    }
+    
+    // Update total readings count
+    const totalEl = document.getElementById('totalReadingsValue');
+    if (totalEl && data.length > 0) {
+        const total = data.reduce((sum, d) => sum + (d.recording_count || 0), 0);
+        totalEl.textContent = total;
+    }
+}
+
+function getDateFromTrendItem(t) {
+    // Handle different date field names from API
+    // Daily data uses 'date', weekly data might use 'week_start', 'period_start', or 'start_date'
+    const dateStr = t.date || t.week_start || t.period_start || t.start_date;
+    if (!dateStr) {
+        return null;
+    }
+    return new Date(dateStr);
+}
+
+function formatTrendDate(t) {
+    const date = getDateFromTrendItem(t);
+    if (!date || isNaN(date.getTime())) {
+        return '';
+    }
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
 function initCharts(trendsData) {
     const colors = CasanaCharts.getColors();
-    const labels = trendsData.map(t => {
-        const date = new Date(t.date);
-        return currentPeriod === 30 
-            ? date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-            : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    });
+    const labels = trendsData.map(t => formatTrendDate(t)).filter(Boolean);
+    
+    // If no valid labels, use index-based labels
+    const finalLabels = labels.length === trendsData.length 
+        ? labels 
+        : trendsData.map((_, i) => currentPeriod === 30 ? `Day ${i + 1}` : `Week ${i + 1}`);
     
     // BP Chart
     charts.bp = CasanaCharts.createBPChart(
         document.getElementById('bpTrendChart'),
-        trendsData.map(t => ({
-            date: new Date(t.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        trendsData.map((t, i) => ({
+            date: finalLabels[i],
             systolic: t.avg_bp_systolic,
             diastolic: t.avg_bp_diastolic
         }))
@@ -295,7 +329,7 @@ function initCharts(trendsData) {
     // HR Chart
     charts.hr = CasanaCharts.createLineChart(document.getElementById('hrTrendChart'), {
         data: {
-            labels: labels,
+            labels: finalLabels,
             datasets: [{
                 label: 'Heart Rate',
                 data: trendsData.map(t => t.avg_heart_rate),
@@ -309,7 +343,7 @@ function initCharts(trendsData) {
     // SpO2 Chart
     charts.spo2 = CasanaCharts.createLineChart(document.getElementById('spo2TrendChart'), {
         data: {
-            labels: labels,
+            labels: finalLabels,
             datasets: [{
                 label: 'SpO₂',
                 data: trendsData.map(t => t.avg_blood_oxygenation),
@@ -328,7 +362,7 @@ function initCharts(trendsData) {
     // Agility Chart
     charts.agility = CasanaCharts.createLineChart(document.getElementById('agilityTrendChart'), {
         data: {
-            labels: labels,
+            labels: finalLabels,
             datasets: [{
                 label: 'Agility Score',
                 data: trendsData.map(t => t.avg_agility_score),

@@ -23,27 +23,34 @@ require_once __DIR__ . '/../includes/header.php';
 
 <div class="container py-4" style="max-width: 900px;">
     <!-- Back Button -->
-    <a href="history.php?id=<?php echo $userId; ?>" class="btn btn-outline-secondary mb-4">
+    <a href="history.php?id=<?php echo $userId; ?>" class="btn btn-outline-secondary mb-4 rounded-pill px-3">
         <i class="bi bi-arrow-left me-2"></i>Back to History
     </a>
     
     <?php if ($recording): ?>
     
     <!-- Recording Header -->
-    <div class="card mb-4">
-        <div class="card-body">
+    <div class="card mb-4 recording-header-card">
+        <div class="card-body py-4">
             <div class="row align-items-center">
                 <div class="col">
-                    <h2 class="mb-1"><?php echo formatDateTime($recording['sit_time']); ?></h2>
-                    <p class="text-muted mb-0">
-                        <i class="bi bi-stopwatch me-1"></i>Duration: <?php echo formatDuration($recording['duration_seconds']); ?>
+                    <h2 class="mb-1 fw-bold" style="letter-spacing: -0.02em;"><?php echo formatDateTime($recording['sit_time']); ?></h2>
+                    <p class="text-muted mb-0 d-flex align-items-center gap-2">
+                        <i class="bi bi-stopwatch"></i>
+                        <span>Duration: <?php echo formatDuration($recording['duration_seconds']); ?></span>
                     </p>
                 </div>
                 <div class="col-auto">
                     <?php if ($recording['htn']): ?>
-                    <span class="badge bg-danger fs-6 px-3 py-2">Hypertensive Reading</span>
+                    <span class="badge bg-danger-soft text-danger fs-6 px-4 py-2 rounded-pill fw-semibold">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                        Hypertensive
+                    </span>
                     <?php else: ?>
-                    <span class="badge bg-success fs-6 px-3 py-2">Normal Reading</span>
+                    <span class="badge bg-success-soft text-success fs-6 px-4 py-2 rounded-pill fw-semibold">
+                        <i class="bi bi-check-circle-fill me-1"></i>
+                        Normal
+                    </span>
                     <?php endif; ?>
                 </div>
             </div>
@@ -51,10 +58,10 @@ require_once __DIR__ . '/../includes/header.php';
     </div>
     
     <!-- Vitals Grid -->
-    <div class="row g-4 mb-4">
+    <div class="row g-4 mb-4 animate-stagger">
         <div class="col-6 col-md-4">
-            <div class="card text-center py-4 h-100">
-                <i class="bi bi-heart-pulse fs-3 text-danger mb-2"></i>
+            <div class="card recording-vital-card h-100">
+                <i class="bi bi-heart-pulse fs-2 text-danger mb-3"></i>
                 <div class="vital-label">Blood Pressure</div>
                 <div class="vital-value-bp" style="color: <?php echo $recording['htn'] ? 'var(--status-danger)' : 'var(--text-primary)'; ?>">
                     <span class="bp-fraction-lg">
@@ -67,40 +74,40 @@ require_once __DIR__ . '/../includes/header.php';
             </div>
         </div>
         <div class="col-6 col-md-4">
-            <div class="card text-center py-4 h-100">
-                <i class="bi bi-activity fs-3 mb-2" style="color: var(--casana-maroon);"></i>
+            <div class="card recording-vital-card h-100">
+                <i class="bi bi-activity fs-2 mb-3" style="color: var(--casana-maroon);"></i>
                 <div class="vital-label">Heart Rate</div>
                 <div class="vital-value"><?php echo $recording['heart_rate']; ?></div>
                 <div class="vital-unit">bpm</div>
             </div>
         </div>
         <div class="col-6 col-md-4">
-            <div class="card text-center py-4 h-100">
-                <i class="bi bi-lungs fs-3 mb-2" style="color: var(--casana-baby-blue);"></i>
+            <div class="card recording-vital-card h-100">
+                <i class="bi bi-lungs fs-2 mb-3" style="color: var(--casana-baby-blue);"></i>
                 <div class="vital-label">Blood Oxygen</div>
                 <div class="vital-value"><?php echo round($recording['blood_oxygenation'], 1); ?></div>
                 <div class="vital-unit">%</div>
             </div>
         </div>
         <div class="col-6 col-md-4">
-            <div class="card text-center py-4 h-100">
-                <i class="bi bi-lightning fs-3 mb-2" style="color: var(--casana-orange);"></i>
+            <div class="card recording-vital-card h-100">
+                <i class="bi bi-lightning fs-2 mb-3" style="color: var(--casana-orange);"></i>
                 <div class="vital-label">HRV</div>
                 <div class="vital-value"><?php echo round($recording['hrv'], 1); ?></div>
                 <div class="vital-unit">ms</div>
             </div>
         </div>
         <div class="col-6 col-md-4">
-            <div class="card text-center py-4 h-100">
-                <i class="bi bi-person-walking fs-3 mb-2" style="color: var(--casana-green);"></i>
+            <div class="card recording-vital-card h-100">
+                <i class="bi bi-person-walking fs-2 mb-3" style="color: var(--casana-green);"></i>
                 <div class="vital-label">Agility Score</div>
                 <div class="vital-value"><?php echo round($recording['agility_score']); ?></div>
                 <div class="vital-unit">/100</div>
             </div>
         </div>
         <div class="col-6 col-md-4">
-            <div class="card text-center py-4 h-100">
-                <i class="bi bi-speedometer2 fs-3 mb-2" style="color: var(--casana-purple);"></i>
+            <div class="card recording-vital-card h-100">
+                <i class="bi bi-speedometer2 fs-2 mb-3" style="color: var(--casana-purple);"></i>
                 <div class="vital-label">Seated Weight</div>
                 <div class="vital-value"><?php echo round($recording['seated_weight'], 1); ?></div>
                 <div class="vital-unit">kg</div>

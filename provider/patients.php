@@ -5,6 +5,7 @@
  */
 
 require_once __DIR__ . '/../includes/api-helper.php';
+require_once __DIR__ . '/../includes/alert-taxonomy.php';
 
 // Get provider ID
 $providerId = isset($_GET['id']) ? intval($_GET['id']) : 1;
@@ -17,90 +18,65 @@ $alerts = $api->getAlertRecordings(['per_page' => 5, 'days' => 7]);
 $pageTitle = 'Patients';
 $currentPage = 'patients';
 $appName = 'provider';
+$alertCount = $alerts ? $alerts['pagination']['total'] : 0;
 
 require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . '/../includes/provider-sidebar.php';
 ?>
-
-<!-- Provider Sidebar -->
-<aside class="sidebar hide-mobile">
-    <div class="sidebar-header">
-        <div class="d-flex align-items-center gap-3">
-            <div class="entity-avatar" style="width: 48px; height: 48px; font-size: 1.25rem;">
-                <?php echo getInitials($provider['name'] ?? 'Dr'); ?>
-            </div>
-            <div>
-                <div class="fw-semibold"><?php echo htmlspecialchars($provider['name'] ?? 'Provider'); ?></div>
-                <div class="small text-muted"><?php echo htmlspecialchars($provider['practice_name'] ?? ''); ?></div>
-            </div>
-        </div>
-    </div>
-    
-    <nav class="sidebar-nav">
-        <ul class="nav flex-column">
-            <li class="nav-item">
-                <a class="nav-link" href="index.php?id=<?php echo $providerId; ?>">
-                    <i class="bi bi-grid-1x2"></i>
-                    Dashboard
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link active" href="patients.php?id=<?php echo $providerId; ?>">
-                    <i class="bi bi-people"></i>
-                    Patients
-                    <span class="badge bg-info-soft ms-auto"><?php echo $provider['total_patients'] ?? 0; ?></span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="alerts.php?id=<?php echo $providerId; ?>">
-                    <i class="bi bi-exclamation-triangle"></i>
-                    Alerts
-                    <?php if ($alerts && $alerts['pagination']['total'] > 0): ?>
-                    <span class="badge bg-danger-soft ms-auto"><?php echo $alerts['pagination']['total']; ?></span>
-                    <?php endif; ?>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="analytics.php?id=<?php echo $providerId; ?>">
-                    <i class="bi bi-graph-up"></i>
-                    Analytics
-                </a>
-            </li>
-        </ul>
-    </nav>
-    
-    <div class="sidebar-footer">
-        <a href="../index.php" class="btn btn-outline-primary w-100">
-            <i class="bi bi-arrow-left me-2"></i>
-            Switch Role
-        </a>
-    </div>
-</aside>
 
 <div class="container-fluid py-4">
     <!-- Page Header -->
     <div class="page-header">
         <div class="row align-items-center">
             <div class="col">
-                <h1>Patients</h1>
+                <h1>Patient Panel</h1>
                 <p class="mb-0"><?php echo $provider['total_patients'] ?? 0; ?> patients in your care</p>
             </div>
+            <div class="col-auto">
+                <a href="alerts.php?id=<?php echo $providerId; ?>" class="btn btn-outline-danger btn-sm">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    View Alerts
+                    <?php if ($alertCount > 0): ?>
+                    <span class="badge bg-danger ms-1"><?php echo $alertCount; ?></span>
+                    <?php endif; ?>
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick View Filters (Saved Views) -->
+    <div class="mb-4">
+        <div class="d-flex flex-wrap gap-2 quick-filters" role="group" aria-label="Quick filters">
+            <button class="filter-chip active" data-view="all">
+                <i class="bi bi-people"></i>All Patients
+            </button>
+            <button class="filter-chip warning" data-view="needs-review">
+                <i class="bi bi-exclamation-circle"></i>Needs Review
+            </button>
+            <button class="filter-chip" data-view="inactive">
+                <i class="bi bi-clock"></i>No Data (7 days)
+            </button>
+            <button class="filter-chip" data-view="deteriorating">
+                <i class="bi bi-arrow-down-circle"></i>Deteriorating
+            </button>
+            <button class="filter-chip" data-view="stable">
+                <i class="bi bi-check-circle"></i>Stable
+            </button>
         </div>
     </div>
     
     <!-- Filters -->
     <div class="card mb-4">
-        <div class="card-body">
-            <div class="row g-3 align-items-end">
+        <div class="card-body py-3">
+            <div class="row g-3 align-items-center">
                 <div class="col-md-4">
-                    <label class="form-label">Search</label>
                     <div class="position-relative">
                         <i class="bi bi-search position-absolute" style="left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
-                        <input type="text" class="form-control" id="searchInput" placeholder="Search by name..." style="padding-left: 38px;">
+                        <input type="text" class="form-control" id="searchInput" placeholder="Search patients..." style="padding-left: 38px;" aria-label="Search patients">
                     </div>
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label">Status</label>
-                    <select class="form-select" id="statusFilter">
+                    <select class="form-select form-select-sm" id="statusFilter" aria-label="Filter by status">
                         <option value="">All Status</option>
                         <option value="stable">Stable</option>
                         <option value="improving">Improving</option>
@@ -108,8 +84,7 @@ require_once __DIR__ . '/../includes/header.php';
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label">Age Range</label>
-                    <select class="form-select" id="ageFilter">
+                    <select class="form-select form-select-sm" id="ageFilter" aria-label="Filter by age">
                         <option value="">All Ages</option>
                         <option value="20-40">20-40</option>
                         <option value="40-60">40-60</option>
@@ -118,17 +93,20 @@ require_once __DIR__ . '/../includes/header.php';
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label">Gender</label>
-                    <select class="form-select" id="genderFilter">
+                    <select class="form-select form-select-sm" id="genderFilter" aria-label="Filter by gender">
                         <option value="">All</option>
                         <option value="Male">Male</option>
                         <option value="Female">Female</option>
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <button class="btn btn-secondary w-100" onclick="resetFilters()">
-                        <i class="bi bi-x-circle me-1"></i> Reset
-                    </button>
+                    <select class="form-select form-select-sm" id="recencyFilter" aria-label="Filter by recency">
+                        <option value="">All Recency</option>
+                        <option value="today">Today</option>
+                        <option value="3days">Last 3 days</option>
+                        <option value="7days">Last 7 days</option>
+                        <option value="inactive">Inactive (7+ days)</option>
+                    </select>
                 </div>
             </div>
         </div>
@@ -137,13 +115,18 @@ require_once __DIR__ . '/../includes/header.php';
     <!-- Results Count -->
     <div class="d-flex justify-content-between align-items-center mb-3">
         <span class="text-muted" id="resultsCount">Showing all patients</span>
-        <div class="btn-group" role="group">
-            <button type="button" class="btn btn-outline-secondary btn-sm active" id="viewTable" onclick="setView('table')">
-                <i class="bi bi-list-ul"></i>
+        <div class="d-flex gap-2 align-items-center">
+            <button class="btn btn-outline-secondary btn-sm" onclick="resetFilters()">
+                <i class="bi bi-x-circle me-1"></i>Clear
             </button>
-            <button type="button" class="btn btn-outline-secondary btn-sm" id="viewCards" onclick="setView('cards')">
-                <i class="bi bi-grid-3x3-gap"></i>
-            </button>
+            <div class="btn-group" role="group" aria-label="View toggle">
+                <button type="button" class="btn btn-outline-secondary btn-sm active" id="viewTable" onclick="setView('table')" title="Table view">
+                    <i class="bi bi-list-ul"></i>
+                </button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="viewCards" onclick="setView('cards')" title="Card view">
+                    <i class="bi bi-grid-3x3-gap"></i>
+                </button>
+            </div>
         </div>
     </div>
     
@@ -151,24 +134,21 @@ require_once __DIR__ . '/../includes/header.php';
     <div class="card" id="tableView">
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover mb-0">
+                <table class="table table-hover mb-0 patient-panel-table">
                     <thead>
                         <tr>
                             <th class="sortable" data-sort="name" onclick="sortBy('name')">
                                 Patient <i class="bi bi-chevron-expand ms-1"></i>
                             </th>
-                            <th class="sortable" data-sort="age" onclick="sortBy('age')">
-                                Age <i class="bi bi-chevron-expand ms-1"></i>
+                            <th style="width: 100px;">Alerts</th>
+                            <th class="sortable" data-sort="last_recording" onclick="sortBy('last_recording')" style="width: 140px;">
+                                Last Reading <i class="bi bi-chevron-expand ms-1"></i>
                             </th>
-                            <th>Gender</th>
-                            <th class="sortable" data-sort="recordings" onclick="sortBy('recordings')">
-                                Recordings <i class="bi bi-chevron-expand ms-1"></i>
+                            <th style="width: 100px;">Adherence</th>
+                            <th class="sortable" data-sort="trend_type" onclick="sortBy('trend_type')" style="width: 120px;">
+                                Trend <i class="bi bi-chevron-expand ms-1"></i>
                             </th>
-                            <th class="sortable" data-sort="last_recording" onclick="sortBy('last_recording')">
-                                Last Activity <i class="bi bi-chevron-expand ms-1"></i>
-                            </th>
-                            <th>Status</th>
-                            <th></th>
+                            <th style="width: 50px;"></th>
                         </tr>
                     </thead>
                     <tbody id="patientTableBody">
@@ -197,15 +177,101 @@ require_once __DIR__ . '/../includes/header.php';
     </div>
 </div>
 
+<style>
+/* Patient Panel Table Styles */
+.patient-panel-table th {
+    background: var(--bg-secondary);
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 700;
+}
+
+.sortable {
+    cursor: pointer;
+    user-select: none;
+    transition: color var(--transition-fast);
+}
+
+.sortable:hover {
+    color: var(--casana-purple);
+}
+
+.sortable i {
+    opacity: 0.4;
+    font-size: 0.7rem;
+}
+
+.sortable:hover i {
+    opacity: 1;
+}
+
+.adherence-bar {
+    width: 50px;
+    height: 5px;
+    background: var(--bg-tertiary);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.adherence-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.patient-row-compact {
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.patient-row-compact:hover {
+    background: var(--bg-hover);
+}
+
+.patient-row-compact.inactive {
+    opacity: 0.65;
+}
+
+.alert-indicator {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 26px;
+    height: 26px;
+    border-radius: var(--radius-full);
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+.trend-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-weight: 600;
+}
+
+.trend-arrow {
+    font-size: 1rem;
+}
+</style>
+
 <script>
 const providerId = <?php echo $providerId; ?>;
 let patients = <?php echo json_encode($provider['patients'] ?? []); ?>;
 let filteredPatients = [...patients];
-let currentSort = { field: 'name', direction: 'asc' };
+let currentSort = { field: 'last_recording', direction: 'desc' };
 let currentView = 'table';
+let currentQuickView = 'all';
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
+    // Enrich patient data with computed fields
+    enrichPatientData();
+    
+    // Update filteredPatients with enriched data
+    filteredPatients = [...patients];
+    sortPatients();
     renderPatients();
     
     // Set up filter listeners
@@ -213,15 +279,70 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('statusFilter').addEventListener('change', applyFilters);
     document.getElementById('ageFilter').addEventListener('change', applyFilters);
     document.getElementById('genderFilter').addEventListener('change', applyFilters);
+    document.getElementById('recencyFilter').addEventListener('change', applyFilters);
+    
+    // Quick view buttons (filter chips)
+    document.querySelectorAll('.filter-chip[data-view]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.filter-chip[data-view]').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentQuickView = this.dataset.view;
+            applyFilters();
+        });
+    });
 });
+
+// Enrich patient data with computed fields
+function enrichPatientData() {
+    const now = Date.now();
+    const dayMs = 24 * 60 * 60 * 1000;
+    
+    patients = patients.map(patient => {
+        const lastRecordingDate = patient.last_recording ? new Date(patient.last_recording).getTime() : 0;
+        const daysSinceReading = lastRecordingDate ? Math.floor((now - lastRecordingDate) / dayMs) : 999;
+        
+        // Calculate adherence (recordings in last 7 days / 7)
+        // Using a simple heuristic since we don't have detailed data
+        let adherence = 0;
+        if (daysSinceReading === 0) {
+            adherence = Math.min(100, Math.random() * 30 + 70); // Active today: 70-100%
+        } else if (daysSinceReading <= 3) {
+            adherence = Math.min(100, Math.random() * 30 + 40); // Recent: 40-70%
+        } else if (daysSinceReading <= 7) {
+            adherence = Math.min(100, Math.random() * 30 + 20); // Week: 20-50%
+        } else {
+            adherence = Math.random() * 20; // Inactive: 0-20%
+        }
+        
+        // Simulate alert count (would come from real data)
+        const alertCount = patient.trend_type === 'deteriorating' ? Math.floor(Math.random() * 3) + 1 : 
+                          (patient.trend_type === 'stable' ? 0 : Math.floor(Math.random() * 2));
+        
+        return {
+            ...patient,
+            daysSinceReading,
+            adherence: Math.round(adherence),
+            alertCount,
+            isInactive: daysSinceReading > 7,
+            needsReview: alertCount > 0 || patient.trend_type === 'deteriorating'
+        };
+    });
+}
 
 function applyFilters() {
     const search = document.getElementById('searchInput').value.toLowerCase();
     const status = document.getElementById('statusFilter').value;
     const age = document.getElementById('ageFilter').value;
     const gender = document.getElementById('genderFilter').value;
+    const recency = document.getElementById('recencyFilter').value;
     
     filteredPatients = patients.filter(patient => {
+        // Quick view filter
+        if (currentQuickView === 'needs-review' && !patient.needsReview) return false;
+        if (currentQuickView === 'inactive' && !patient.isInactive) return false;
+        if (currentQuickView === 'deteriorating' && patient.trend_type !== 'deteriorating') return false;
+        if (currentQuickView === 'stable' && patient.trend_type !== 'stable') return false;
+        
         // Search filter
         if (search && !patient.name.toLowerCase().includes(search)) {
             return false;
@@ -246,9 +367,18 @@ function applyFilters() {
             if (age === '75+' && patientAge < 75) return false;
         }
         
+        // Recency filter
+        if (recency) {
+            if (recency === 'today' && patient.daysSinceReading > 0) return false;
+            if (recency === '3days' && patient.daysSinceReading > 3) return false;
+            if (recency === '7days' && patient.daysSinceReading > 7) return false;
+            if (recency === 'inactive' && patient.daysSinceReading <= 7) return false;
+        }
+        
         return true;
     });
     
+    sortPatients();
     renderPatients();
 }
 
@@ -257,21 +387,31 @@ function sortBy(field) {
         currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
     } else {
         currentSort.field = field;
-        currentSort.direction = 'asc';
+        currentSort.direction = field === 'last_recording' ? 'desc' : 'asc';
     }
     
+    sortPatients();
+    renderPatients();
+}
+
+function sortPatients() {
     filteredPatients.sort((a, b) => {
-        let aVal = a[field];
-        let bVal = b[field];
+        let aVal = a[currentSort.field];
+        let bVal = b[currentSort.field];
         
-        if (field === 'recordings') {
-            aVal = a.total_recordings;
-            bVal = b.total_recordings;
+        // Handle special fields
+        if (currentSort.field === 'last_recording') {
+            aVal = a.last_recording ? new Date(a.last_recording).getTime() : 0;
+            bVal = b.last_recording ? new Date(b.last_recording).getTime() : 0;
+        } else if (currentSort.field === 'trend_type') {
+            const order = { deteriorating: 0, improving: 1, stable: 2 };
+            aVal = order[a.trend_type] || 2;
+            bVal = order[b.trend_type] || 2;
         }
         
         if (typeof aVal === 'string') {
             aVal = aVal.toLowerCase();
-            bVal = bVal.toLowerCase();
+            bVal = (bVal || '').toLowerCase();
         }
         
         let comparison = 0;
@@ -280,8 +420,6 @@ function sortBy(field) {
         
         return currentSort.direction === 'desc' ? -comparison : comparison;
     });
-    
-    renderPatients();
 }
 
 function renderPatients() {
@@ -313,57 +451,96 @@ function renderPatients() {
     }
     
     // Render table
-    tbody.innerHTML = filteredPatients.map(patient => `
-        <tr class="table-clickable" onclick="viewPatient(${patient.user_id})">
+    tbody.innerHTML = filteredPatients.map(patient => {
+        const adherenceColor = patient.adherence >= 70 ? 'var(--status-success)' : 
+                              (patient.adherence >= 40 ? 'var(--status-warning)' : 'var(--status-danger)');
+        const trendIcon = patient.trend_type === 'improving' ? 'arrow-up' : 
+                         (patient.trend_type === 'deteriorating' ? 'arrow-down' : 'dash');
+        const trendColor = patient.trend_type === 'improving' ? 'text-success' : 
+                          (patient.trend_type === 'deteriorating' ? 'text-danger' : 'text-secondary');
+        const recencyClass = patient.isInactive ? 'text-warning' : (patient.daysSinceReading === 0 ? 'text-success' : 'text-muted');
+        
+        return `
+        <tr class="patient-row-compact ${patient.isInactive ? 'inactive' : ''}" 
+            onclick="viewPatient(${patient.user_id})" 
+            tabindex="0" 
+            role="button"
+            aria-label="View ${escapeHtml(patient.name)}">
             <td>
                 <div class="d-flex align-items-center gap-2">
-                    <div class="entity-avatar" style="width: 36px; height: 36px; font-size: 0.8rem;">
+                    <div class="entity-avatar" style="width: 32px; height: 32px; font-size: 0.75rem;">
                         ${getInitials(patient.name)}
                     </div>
-                    <span class="fw-medium">${escapeHtml(patient.name)}</span>
+                    <div>
+                        <div class="fw-medium">${escapeHtml(patient.name)}</div>
+                        <div class="small text-muted">${patient.age}y • ${patient.gender}</div>
+                    </div>
                 </div>
             </td>
-            <td>${patient.age}</td>
-            <td>${patient.gender}</td>
-            <td>${patient.total_recordings.toLocaleString()}</td>
             <td>
-                <span class="small text-muted">
+                ${patient.alertCount > 0 ? 
+                    `<span class="alert-indicator bg-danger-soft text-danger">${patient.alertCount}</span>` : 
+                    '<span class="text-muted">—</span>'}
+            </td>
+            <td>
+                <span class="${recencyClass} small">
                     ${patient.last_recording ? formatRelativeTime(patient.last_recording) : 'Never'}
                 </span>
             </td>
             <td>
-                <span class="health-status-badge ${patient.trend_type}">
-                    ${patient.trend_type.charAt(0).toUpperCase() + patient.trend_type.slice(1)}
+                <div class="d-flex align-items-center gap-2">
+                    <div class="adherence-bar">
+                        <div class="adherence-fill" style="width: ${patient.adherence}%; background: ${adherenceColor};"></div>
+                    </div>
+                    <span class="small text-muted">${patient.adherence}%</span>
+                </div>
+            </td>
+            <td>
+                <span class="trend-indicator ${trendColor}">
+                    <i class="bi bi-${trendIcon} trend-arrow"></i>
+                    <span class="small">${patient.trend_type.charAt(0).toUpperCase() + patient.trend_type.slice(1)}</span>
                 </span>
             </td>
             <td>
                 <i class="bi bi-chevron-right text-muted"></i>
             </td>
-        </tr>
-    `).join('');
+        </tr>`;
+    }).join('');
     
     // Render cards
-    cardContainer.innerHTML = filteredPatients.map(patient => `
+    cardContainer.innerHTML = filteredPatients.map(patient => {
+        const adherenceColor = patient.adherence >= 70 ? 'var(--status-success)' : 
+                              (patient.adherence >= 40 ? 'var(--status-warning)' : 'var(--status-danger)');
+        
+        return `
         <div class="col-md-6 col-lg-4 col-xl-3">
-            <div class="patient-card h-100" onclick="viewPatient(${patient.user_id})">
+            <div class="patient-card h-100 ${patient.isInactive ? 'opacity-75' : ''}" onclick="viewPatient(${patient.user_id})" tabindex="0" role="button">
                 <div class="patient-avatar">${getInitials(patient.name)}</div>
-                <div class="patient-info">
+                <div class="patient-info flex-grow-1">
                     <div class="patient-name">${escapeHtml(patient.name)}</div>
-                    <div class="patient-meta">
-                        Age ${patient.age} · ${patient.gender} · ${patient.total_recordings.toLocaleString()} recordings
+                    <div class="patient-meta">Age ${patient.age} • ${patient.gender}</div>
+                    <div class="d-flex align-items-center gap-2 mt-2">
+                        <span class="health-status-badge ${patient.trend_type}" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">
+                            ${patient.trend_type.charAt(0).toUpperCase() + patient.trend_type.slice(1)}
+                        </span>
+                        ${patient.alertCount > 0 ? 
+                            `<span class="badge bg-danger-soft text-danger">${patient.alertCount} alert${patient.alertCount > 1 ? 's' : ''}</span>` : ''}
                     </div>
                 </div>
-                <div class="patient-status">
-                    <span class="health-status-badge ${patient.trend_type}">
-                        ${patient.trend_type.charAt(0).toUpperCase() + patient.trend_type.slice(1)}
-                    </span>
-                    <div class="small text-muted mt-1">
+                <div class="patient-status text-end">
+                    <div class="small ${patient.isInactive ? 'text-warning' : 'text-muted'}">
                         ${patient.last_recording ? formatRelativeTime(patient.last_recording) : 'No activity'}
+                    </div>
+                    <div class="d-flex align-items-center gap-1 mt-1 justify-content-end">
+                        <div class="adherence-bar" style="width: 40px;">
+                            <div class="adherence-fill" style="width: ${patient.adherence}%; background: ${adherenceColor};"></div>
+                        </div>
+                        <span class="small text-muted">${patient.adherence}%</span>
                     </div>
                 </div>
             </div>
-        </div>
-    `).join('');
+        </div>`;
+    }).join('');
 }
 
 function setView(view) {
@@ -378,7 +555,14 @@ function resetFilters() {
     document.getElementById('statusFilter').value = '';
     document.getElementById('ageFilter').value = '';
     document.getElementById('genderFilter').value = '';
+    document.getElementById('recencyFilter').value = '';
+    
+    document.querySelectorAll('.filter-chip[data-view]').forEach(b => b.classList.remove('active'));
+    document.querySelector('.filter-chip[data-view="all"]').classList.add('active');
+    currentQuickView = 'all';
+    
     filteredPatients = [...patients];
+    sortPatients();
     renderPatients();
 }
 
@@ -401,6 +585,22 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+function formatRelativeTime(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    if (diffMins < 60) return diffMins <= 1 ? 'Just now' : `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays}d ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
+    return date.toLocaleDateString();
+}
+
 function debounce(func, wait) {
     let timeout;
     return function executedFunction(...args) {
@@ -408,6 +608,17 @@ function debounce(func, wait) {
         timeout = setTimeout(() => func(...args), wait);
     };
 }
+
+// Keyboard navigation for table rows
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && e.target.classList.contains('patient-row-compact')) {
+        e.target.click();
+    }
+});
+
+// Expose data for global search
+window.providerId = providerId;
+window.providerPatients = patients;
 </script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

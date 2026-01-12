@@ -1,6 +1,7 @@
 /**
  * Casana Chart Helpers
  * Wrapper functions for Chart.js with Casana branding
+ * Enhanced with gradients, animations, and reference lines
  */
 
 const CasanaCharts = {
@@ -10,24 +11,94 @@ const CasanaCharts = {
     defaultOptions: {
         responsive: true,
         maintainAspectRatio: false,
+        animation: {
+            duration: 1000,
+            easing: 'easeOutQuart',
+        },
         plugins: {
             legend: {
                 display: false,
             },
             tooltip: {
-                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                backgroundColor: 'rgba(15, 23, 42, 0.95)',
                 titleFont: {
-                    family: "'Arimo', sans-serif",
+                    family: "'Plus Jakarta Sans', sans-serif",
                     size: 13,
+                    weight: 600,
                 },
                 bodyFont: {
-                    family: "'Arimo', sans-serif",
+                    family: "'Plus Jakarta Sans', sans-serif",
                     size: 12,
                 },
                 padding: 12,
-                cornerRadius: 8,
+                cornerRadius: 10,
+                borderColor: 'rgba(148, 163, 184, 0.2)',
+                borderWidth: 1,
+                displayColors: true,
+                boxPadding: 4,
+                usePointStyle: true,
             },
         },
+        interaction: {
+            mode: 'index',
+            intersect: false,
+        },
+    },
+    
+    /**
+     * Create a gradient for chart fills
+     * @param {CanvasRenderingContext2D} ctx - Canvas context
+     * @param {string} color - Base color
+     * @param {number} alpha - Opacity (0-1)
+     * @returns {CanvasGradient}
+     */
+    createGradient(ctx, color, alpha = 0.3) {
+        const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+        gradient.addColorStop(0, this.hexToRgba(color, alpha));
+        gradient.addColorStop(1, this.hexToRgba(color, 0));
+        return gradient;
+    },
+    
+    /**
+     * Convert hex color to rgba
+     * @param {string} hex - Hex color
+     * @param {number} alpha - Opacity
+     * @returns {string}
+     */
+    hexToRgba(hex, alpha) {
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    },
+    
+    /**
+     * Create reference line annotation plugin config
+     * @param {number} value - Y-axis value for line
+     * @param {string} label - Label text
+     * @param {string} color - Line color
+     * @returns {object}
+     */
+    createReferenceLine(value, label, color = '#94a3b8') {
+        return {
+            type: 'line',
+            yMin: value,
+            yMax: value,
+            borderColor: color,
+            borderWidth: 1,
+            borderDash: [6, 4],
+            label: {
+                display: true,
+                content: label,
+                position: 'end',
+                backgroundColor: 'transparent',
+                color: color,
+                font: {
+                    size: 10,
+                    family: "'Plus Jakarta Sans', sans-serif",
+                },
+            },
+        };
     },
     
     /**
@@ -75,7 +146,7 @@ const CasanaCharts = {
                         ticks: {
                             color: colors.textSecondary,
                             font: {
-                                family: "'Arimo', sans-serif",
+                                family: "'Plus Jakarta Sans', sans-serif",
                             },
                         },
                     },
@@ -87,7 +158,7 @@ const CasanaCharts = {
                         ticks: {
                             color: colors.textSecondary,
                             font: {
-                                family: "'Arimo', sans-serif",
+                                family: "'Plus Jakarta Sans', sans-serif",
                             },
                         },
                     },
@@ -170,7 +241,7 @@ const CasanaCharts = {
                         labels: {
                             color: colors.text,
                             font: {
-                                family: "'Arimo', sans-serif",
+                                family: "'Plus Jakarta Sans', sans-serif",
                             },
                             padding: 16,
                         },
@@ -204,7 +275,7 @@ const CasanaCharts = {
                         ticks: {
                             color: colors.textSecondary,
                             font: {
-                                family: "'Arimo', sans-serif",
+                                family: "'Plus Jakarta Sans', sans-serif",
                             },
                         },
                     },
@@ -216,7 +287,7 @@ const CasanaCharts = {
                         ticks: {
                             color: colors.textSecondary,
                             font: {
-                                family: "'Arimo', sans-serif",
+                                family: "'Plus Jakarta Sans', sans-serif",
                             },
                         },
                     },
@@ -267,8 +338,8 @@ const CasanaCharts = {
                     tooltip: {
                         enabled: true,
                         backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        titleFont: { family: "'Arimo', sans-serif" },
-                        bodyFont: { family: "'Arimo', sans-serif" },
+                        titleFont: { family: "'Plus Jakarta Sans', sans-serif" },
+                        bodyFont: { family: "'Plus Jakarta Sans', sans-serif" },
                         callbacks: {
                             title: function(items) {
                                 return items[0].label + 's';
@@ -469,9 +540,9 @@ const CasanaCharts = {
                     ctx.save();
                     ctx.textAlign = 'center';
                     ctx.fillStyle = colors.text;
-                    ctx.font = "bold 24px 'Arimo', sans-serif";
+                    ctx.font = "bold 24px 'Plus Jakarta Sans', sans-serif";
                     ctx.fillText(value, centerX, centerY - 10);
-                    ctx.font = "12px 'Arimo', sans-serif";
+                    ctx.font = "12px 'Plus Jakarta Sans', sans-serif";
                     ctx.fillStyle = colors.textSecondary;
                     ctx.fillText(label, centerX, centerY + 10);
                     ctx.restore();
@@ -533,8 +604,80 @@ const CasanaCharts = {
     },
 };
 
-// Listen for theme changes and update charts
+// Chart registry for theme updates
+CasanaCharts.registry = [];
+
+/**
+ * Register a chart for automatic theme updates
+ * @param {Chart} chart - Chart instance
+ */
+CasanaCharts.register = function(chart) {
+    this.registry.push(chart);
+};
+
+/**
+ * Unregister a chart (call before destroying)
+ * @param {Chart} chart - Chart instance
+ */
+CasanaCharts.unregister = function(chart) {
+    const index = this.registry.indexOf(chart);
+    if (index > -1) {
+        this.registry.splice(index, 1);
+    }
+};
+
+/**
+ * Update all registered charts for new theme
+ */
+CasanaCharts.updateAllThemes = function() {
+    const colors = this.getColors();
+    
+    this.registry.forEach(chart => {
+        if (chart && chart.options) {
+            // Update scales
+            if (chart.options.scales) {
+                Object.values(chart.options.scales).forEach(scale => {
+                    if (scale.grid) {
+                        scale.grid.color = colors.grid;
+                    }
+                    if (scale.ticks) {
+                        scale.ticks.color = colors.textSecondary;
+                    }
+                    if (scale.title) {
+                        scale.title.color = colors.textSecondary;
+                    }
+                });
+            }
+            
+            // Update legend
+            if (chart.options.plugins && chart.options.plugins.legend && chart.options.plugins.legend.labels) {
+                chart.options.plugins.legend.labels.color = colors.text;
+            }
+            
+            try {
+                chart.update('none'); // 'none' prevents animation during update
+            } catch (e) {
+                console.warn('Failed to update chart theme:', e);
+            }
+        }
+    });
+};
+
+// Listen for theme changes and update all registered charts
 window.addEventListener('themechange', () => {
-    // Charts should be updated by their respective pages
-    console.log('Theme changed, charts should be updated');
+    // Small delay to let CSS variables update
+    setTimeout(() => {
+        CasanaCharts.updateAllThemes();
+    }, 50);
+});
+
+// Also listen for the custom event from theme.js
+document.addEventListener('DOMContentLoaded', () => {
+    // Re-check theme periodically in case of system theme changes
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    mediaQuery.addEventListener('change', () => {
+        setTimeout(() => {
+            CasanaCharts.updateAllThemes();
+        }, 100);
+    });
 });

@@ -27,6 +27,11 @@ if (strpos($_SERVER['REQUEST_URI'], '/user/') !== false) {
 <script src="<?php echo $basePath; ?>/assets/js/api.js"></script>
 <script src="<?php echo $basePath; ?>/assets/js/charts.js"></script>
 
+<?php if (isset($appName) && $appName === 'provider'): ?>
+<!-- Provider-specific scripts -->
+<script src="<?php echo $basePath; ?>/assets/js/provider.js"></script>
+<?php endif; ?>
+
 <?php if (isset($additionalScripts)) echo $additionalScripts; ?>
 
 </body>

@@ -164,6 +164,220 @@ class CasanaAPI {
         $defaults = ['page' => 1, 'per_page' => 20];
         return $this->request("/seats/{$serial}/metadata", array_merge($defaults, $params));
     }
+    
+    // ==========================================================================
+    // Metadata Endpoints
+    // ==========================================================================
+    
+    /**
+     * Get all metadata for an entity
+     */
+    public function getEntityMetadata($entityType, $entityId) {
+        return $this->request("/metadata/{$entityType}/{$entityId}");
+    }
+    
+    /**
+     * Get specific metadata by key
+     */
+    public function getMetadata($entityType, $entityId, $key) {
+        return $this->request("/metadata/{$entityType}/{$entityId}/{$key}");
+    }
+    
+    /**
+     * Set metadata (create or update)
+     */
+    public function setMetadata($entityType, $entityId, $key, $data, $createdBy = null) {
+        $payload = ['data' => $data];
+        if ($createdBy) {
+            $payload['created_by'] = $createdBy;
+        }
+        return $this->postRequest("/metadata/{$entityType}/{$entityId}/{$key}", $payload);
+    }
+    
+    /**
+     * Set multiple metadata keys at once
+     */
+    public function setBulkMetadata($entityType, $entityId, $metadata, $createdBy = null) {
+        $payload = ['metadata' => $metadata];
+        if ($createdBy) {
+            $payload['created_by'] = $createdBy;
+        }
+        return $this->postRequest("/metadata/bulk/{$entityType}/{$entityId}", $payload);
+    }
+    
+    // ==========================================================================
+    // Clinical Notes Endpoints
+    // ==========================================================================
+    
+    /**
+     * Get notes for a user
+     */
+    public function getNotes($params = []) {
+        return $this->request('/clinical/notes', $params);
+    }
+    
+    /**
+     * Get a specific note
+     */
+    public function getNote($id) {
+        return $this->request("/clinical/notes/{$id}");
+    }
+    
+    /**
+     * Create a new note
+     */
+    public function createNote($userId, $content, $author, $params = []) {
+        $payload = array_merge([
+            'user_id' => $userId,
+            'content' => $content,
+            'author' => $author,
+            'note_type' => 'observation'
+        ], $params);
+        return $this->postRequest('/clinical/notes', $payload);
+    }
+    
+    /**
+     * Update a note
+     */
+    public function updateNote($id, $params) {
+        return $this->putRequest("/clinical/notes/{$id}", $params);
+    }
+    
+    /**
+     * Delete a note
+     */
+    public function deleteNote($id) {
+        return $this->deleteRequest("/clinical/notes/{$id}");
+    }
+    
+    // ==========================================================================
+    // Clinical Follow-ups Endpoints
+    // ==========================================================================
+    
+    /**
+     * Get follow-ups
+     */
+    public function getFollowups($params = []) {
+        return $this->request('/clinical/follow-ups', $params);
+    }
+    
+    /**
+     * Get a specific follow-up
+     */
+    public function getFollowup($id) {
+        return $this->request("/clinical/follow-ups/{$id}");
+    }
+    
+    /**
+     * Create a new follow-up
+     */
+    public function createFollowup($userId, $title, $dueDate, $params = []) {
+        $payload = array_merge([
+            'user_id' => $userId,
+            'title' => $title,
+            'due_date' => $dueDate,
+            'followup_type' => 'call',
+            'priority' => 'normal'
+        ], $params);
+        return $this->postRequest('/clinical/follow-ups', $payload);
+    }
+    
+    /**
+     * Complete a follow-up
+     */
+    public function completeFollowup($id, $completedBy, $notes = null) {
+        $payload = ['completed_by' => $completedBy];
+        if ($notes) {
+            $payload['completion_notes'] = $notes;
+        }
+        return $this->postRequest("/clinical/follow-ups/{$id}/complete", $payload);
+    }
+    
+    /**
+     * Cancel a follow-up
+     */
+    public function cancelFollowup($id, $cancelledBy, $reason = null) {
+        $payload = ['cancelled_by' => $cancelledBy];
+        if ($reason) {
+            $payload['reason'] = $reason;
+        }
+        return $this->postRequest("/clinical/follow-ups/{$id}/cancel", $payload);
+    }
+    
+    // ==========================================================================
+    // HTTP Methods for POST/PUT/DELETE
+    // ==========================================================================
+    
+    /**
+     * Make a POST request
+     */
+    public function postRequest($endpoint, $data) {
+        $url = $this->baseUrl . $endpoint;
+        
+        $context = stream_context_create([
+            'http' => [
+                'method' => 'POST',
+                'header' => "X-API-Key: {$this->apiKey}\r\nContent-Type: application/json\r\n",
+                'content' => json_encode($data),
+                'timeout' => 30,
+            ],
+        ]);
+        
+        $response = @file_get_contents($url, false, $context);
+        
+        if ($response === false) {
+            return null;
+        }
+        
+        return json_decode($response, true);
+    }
+    
+    /**
+     * Make a PUT request
+     */
+    public function putRequest($endpoint, $data) {
+        $url = $this->baseUrl . $endpoint;
+        
+        $context = stream_context_create([
+            'http' => [
+                'method' => 'PUT',
+                'header' => "X-API-Key: {$this->apiKey}\r\nContent-Type: application/json\r\n",
+                'content' => json_encode($data),
+                'timeout' => 30,
+            ],
+        ]);
+        
+        $response = @file_get_contents($url, false, $context);
+        
+        if ($response === false) {
+            return null;
+        }
+        
+        return json_decode($response, true);
+    }
+    
+    /**
+     * Make a DELETE request
+     */
+    public function deleteRequest($endpoint) {
+        $url = $this->baseUrl . $endpoint;
+        
+        $context = stream_context_create([
+            'http' => [
+                'method' => 'DELETE',
+                'header' => "X-API-Key: {$this->apiKey}\r\nContent-Type: application/json\r\n",
+                'timeout' => 30,
+            ],
+        ]);
+        
+        $response = @file_get_contents($url, false, $context);
+        
+        if ($response === false) {
+            return null;
+        }
+        
+        return json_decode($response, true);
+    }
 }
 
 // ==========================================================================
@@ -353,6 +567,85 @@ function formatBloodPressure($systolic, $diastolic) {
 function formatBloodPressureStyled($systolic, $diastolic, $isHtn = false) {
     $colorClass = $isHtn ? 'text-danger' : '';
     return '<span class="bp-fraction ' . $colorClass . '"><span class="bp-systolic">' . $systolic . '</span><span class="bp-divider"></span><span class="bp-diastolic">' . $diastolic . '</span></span>';
+}
+
+/**
+ * Calculate trend from historical data
+ * Compares recent average to previous period average
+ * 
+ * @param array $trends Array of trend data from API
+ * @param string $field Field name to calculate trend for
+ * @param int $recentDays Number of recent days to average
+ * @return array ['direction' => 'up'|'down'|'stable', 'change' => float]
+ */
+function calculateTrend($trends, $field, $recentDays = 3) {
+    if (!$trends || count($trends) < 4) {
+        return ['direction' => 'stable', 'change' => 0];
+    }
+    
+    // Get recent period average
+    $recent = array_slice($trends, -$recentDays);
+    $previous = array_slice($trends, -($recentDays * 2), $recentDays);
+    
+    $recentValues = [];
+    $previousValues = [];
+    
+    foreach ($recent as $day) {
+        if (isset($day[$field]) && $day[$field] !== null) {
+            $recentValues[] = $day[$field];
+        }
+    }
+    
+    foreach ($previous as $day) {
+        if (isset($day[$field]) && $day[$field] !== null) {
+            $previousValues[] = $day[$field];
+        }
+    }
+    
+    if (empty($recentValues) || empty($previousValues)) {
+        return ['direction' => 'stable', 'change' => 0];
+    }
+    
+    $recentAvg = array_sum($recentValues) / count($recentValues);
+    $previousAvg = array_sum($previousValues) / count($previousValues);
+    
+    $change = $recentAvg - $previousAvg;
+    $percentChange = $previousAvg > 0 ? ($change / $previousAvg) * 100 : 0;
+    
+    // Determine direction based on 3% threshold
+    $direction = 'stable';
+    if ($percentChange > 3) {
+        $direction = 'up';
+    } elseif ($percentChange < -3) {
+        $direction = 'down';
+    }
+    
+    return [
+        'direction' => $direction,
+        'change' => round($percentChange, 1),
+        'current' => round($recentAvg, 1),
+        'previous' => round($previousAvg, 1)
+    ];
+}
+
+/**
+ * Get trend indicator HTML
+ * 
+ * @param string $direction 'up', 'down', or 'stable'
+ * @param bool $higherIsBad Whether an increase is bad (e.g., for BP)
+ * @return string HTML for trend indicator
+ */
+function getTrendIndicator($direction, $higherIsBad = false) {
+    if ($direction === 'stable') {
+        return '<span class="trend-stable" title="Stable"><i class="bi bi-dash"></i></span>';
+    }
+    
+    $isGood = ($direction === 'down' && $higherIsBad) || ($direction === 'up' && !$higherIsBad);
+    $color = $isGood ? 'var(--status-success)' : 'var(--status-warning)';
+    $icon = $direction === 'up' ? 'arrow-up' : 'arrow-down';
+    $title = $direction === 'up' ? 'Trending up' : 'Trending down';
+    
+    return '<span style="color: ' . $color . ';" title="' . $title . '"><i class="bi bi-' . $icon . '"></i></span>';
 }
 
 // Create global API instance

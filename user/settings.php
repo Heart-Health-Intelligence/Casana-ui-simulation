@@ -34,8 +34,11 @@ require_once __DIR__ . '/../includes/header.php';
 <div class="container py-4" style="max-width: 800px;">
     <!-- Header -->
     <div class="mb-4">
-        <h1 class="mb-1">Settings</h1>
-        <p class="text-muted mb-0">Manage your preferences and account</p>
+        <h1 class="mb-1 h2 fw-bold" style="letter-spacing: -0.02em;">Settings</h1>
+        <p class="text-muted mb-0 d-flex align-items-center gap-2">
+            <i class="bi bi-gear"></i>
+            Manage your preferences and account
+        </p>
     </div>
     
     <!-- Profile -->
@@ -180,7 +183,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <div class="row text-center">
                     <div class="col-4">
                         <div class="small text-muted">Battery</div>
-                        <div class="fw-semibold">
+                        <div class="fw-semibold device-stat-value">
                             <?php 
                             $voltage = $seat['battery_voltage'] ?? 3.7;
                             $percent = min(100, max(0, (($voltage - 3.3) / 0.9) * 100));
@@ -190,11 +193,11 @@ require_once __DIR__ . '/../includes/header.php';
                     </div>
                     <div class="col-4">
                         <div class="small text-muted">Recordings</div>
-                        <div class="fw-semibold"><?php echo number_format($seat['total_recordings'] ?? 0); ?></div>
+                        <div class="fw-semibold device-stat-value"><?php echo number_format($seat['total_recordings'] ?? 0); ?></div>
                     </div>
                     <div class="col-4">
                         <div class="small text-muted">Last Used</div>
-                        <div class="fw-semibold">
+                        <div class="fw-semibold device-stat-value">
                             <?php echo isset($seat['last_used']) ? formatRelativeTime($seat['last_used']) : 'N/A'; ?>
                         </div>
                     </div>

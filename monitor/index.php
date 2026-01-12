@@ -12,6 +12,46 @@ $monitorId = isset($_GET['id']) ? intval($_GET['id']) : 1;
 // Fetch monitor data
 $monitor = $api->getMonitor($monitorId);
 
+// Fetch metadata for relationship labels and avatars
+$monitorMetadata = $api->getEntityMetadata('monitor', $monitorId);
+$relationshipLabels = [];
+$userAvatars = [];
+
+if ($monitorMetadata && isset($monitorMetadata['metadata'])) {
+    foreach ($monitorMetadata['metadata'] as $item) {
+        if (strpos($item['key'], 'relationship_') === 0) {
+            $userId = str_replace('relationship_', '', $item['key']);
+            $relationshipLabels[$userId] = $item['data'];
+        }
+    }
+}
+
+// Count alerts for badge
+$alertCount = 0;
+$familyCount = 0;
+if ($monitor && !empty($monitor['monitored_users'])) {
+    $familyCount = count($monitor['monitored_users']);
+    foreach ($monitor['monitored_users'] as $u) {
+        $uData = $api->getMonitoredUserData($monitorId, $u['user_id']);
+        if ($uData && isset($uData['data'])) {
+            $d = $uData['data'];
+            if ((isset($d['htn']) && $d['htn']) || (isset($d['blood_oxygenation']) && $d['blood_oxygenation'] < 92)) {
+                $alertCount++;
+            }
+        }
+    }
+}
+
+// Get time of day for greeting
+$hour = (int)date('H');
+if ($hour < 12) {
+    $greeting = 'Good morning';
+} elseif ($hour < 17) {
+    $greeting = 'Good afternoon';
+} else {
+    $greeting = 'Good evening';
+}
+
 // Page setup
 $pageTitle = 'Family Dashboard';
 $currentPage = 'dashboard';
@@ -22,15 +62,26 @@ require_once __DIR__ . '/../includes/header.php';
 
 <div class="container py-4" style="max-width: 900px;">
     <!-- Header -->
-    <div class="text-center mb-5">
-        <h1 class="mb-2">Your Family</h1>
-        <p class="text-muted">Keep an eye on the people who matter most</p>
+    <div class="text-center mb-5 page-header-animate">
+        <h1 class="mb-2 display-greeting"><?php echo $greeting; ?></h1>
+        <p class="text-muted lead-subtitle">
+            <?php if ($alertCount > 0): ?>
+                <span class="alert-summary">
+                    <i class="bi bi-exclamation-circle text-warning me-1"></i>
+                    <?php echo $alertCount; ?> family member<?php echo $alertCount > 1 ? 's need' : ' needs'; ?> your attention
+                </span>
+            <?php else: ?>
+                <?php echo $familyCount; ?> family member<?php echo $familyCount !== 1 ? 's' : ''; ?> &mdash; everyone is doing well
+            <?php endif; ?>
+        </p>
     </div>
     
     <!-- Monitored Users Grid -->
     <?php if ($monitor && !empty($monitor['monitored_users'])): ?>
-    <div class="row g-4">
+    <div class="family-grid">
+        <?php $cardIndex = 0; ?>
         <?php foreach ($monitor['monitored_users'] as $user): ?>
+        <?php $cardIndex++; ?>
         <?php
         // Get user's latest data
         $userData = $api->getMonitoredUserData($monitorId, $user['user_id']);
@@ -39,6 +90,7 @@ require_once __DIR__ . '/../includes/header.php';
         $status = 'good';
         $statusMessage = 'is doing well';
         $statusClass = 'status-good';
+        $statusIcon = 'check-circle-fill';
         
         if ($userData && isset($userData['data'])) {
             $latest = $userData['data'];
@@ -46,183 +98,736 @@ require_once __DIR__ . '/../includes/header.php';
                 $status = 'warning';
                 $statusMessage = 'needs attention';
                 $statusClass = 'status-warning';
+                $statusIcon = 'exclamation-circle-fill';
             }
             if (isset($latest['blood_oxygenation']) && $latest['blood_oxygenation'] < 92) {
                 $status = 'alert';
                 $statusMessage = 'may need care';
                 $statusClass = 'status-alert';
+                $statusIcon = 'exclamation-triangle-fill';
             }
         }
         
         $firstName = explode(' ', $user['user_name'])[0];
+        
+        // Get relationship label for this user
+        $relationshipData = isset($relationshipLabels[$user['user_id']]) ? $relationshipLabels[$user['user_id']] : null;
+        $relationshipLabel = $relationshipData ? ($relationshipData['label'] ?? null) : null;
+        
+        // Get avatar URL if available
+        $avatarUrl = null;
+        $userMetadata = $api->getMetadata('user', $user['user_id'], 'avatar');
+        if ($userMetadata && isset($userMetadata['data']['url'])) {
+            $avatarUrl = $userMetadata['data']['url'];
+        }
         ?>
-        <div class="col-md-6">
-            <div class="monitor-user-card health-card <?php echo $statusClass; ?>" 
+        <article class="family-member-card <?php echo $statusClass; ?> animate-card animate-delay-<?php echo min($cardIndex, 5); ?>" 
                  onclick="window.location='user.php?monitor=<?php echo $monitorId; ?>&id=<?php echo $user['user_id']; ?>'"
-                 style="cursor: pointer;">
-                <div class="user-avatar">
+                 role="button"
+                 tabindex="0"
+                 aria-label="View details for <?php echo htmlspecialchars($user['user_name']); ?>">
+            
+            <!-- Status indicator bar -->
+            <div class="status-bar"></div>
+            
+            <!-- Card Header -->
+            <header class="member-header">
+                <?php if ($avatarUrl): ?>
+                <div class="member-avatar avatar-<?php echo $status; ?>" style="background-image: url('<?php echo htmlspecialchars($avatarUrl); ?>');">
+                </div>
+                <?php else: ?>
+                <div class="member-avatar avatar-<?php echo $status; ?>">
                     <?php echo getInitials($user['user_name']); ?>
                 </div>
-                <h3 class="user-name"><?php echo htmlspecialchars($user['user_name']); ?></h3>
-                <p class="status-message <?php echo $status; ?>">
-                    <?php echo $firstName; ?> <?php echo $statusMessage; ?>
-                </p>
-                
-                <?php if ($userData && isset($userData['data'])): ?>
-                <?php $latest = $userData['data']; ?>
-                
-                <!-- Quick Vitals -->
-                <div class="row g-3 mb-4 text-start">
-                    <?php if (in_array('blood_pressure', $user['shared_data_types'])): ?>
-                    <div class="col-6">
-                        <div class="vital-label">Blood Pressure</div>
-                        <div class="vital-value" style="font-size: 1.25rem; color: <?php echo (isset($latest['htn']) && $latest['htn']) ? 'var(--status-danger)' : 'var(--text-primary)'; ?>">
-                            <?php echo $latest['bp_systolic'] ?? '--'; ?>/<?php echo $latest['bp_diastolic'] ?? '--'; ?>
-                        </div>
-                    </div>
-                    <?php endif; ?>
-                    
-                    <?php if (in_array('heart_rate', $user['shared_data_types'])): ?>
-                    <div class="col-6">
-                        <div class="vital-label">Heart Rate</div>
-                        <div class="vital-value" style="font-size: 1.25rem;">
-                            <?php echo $latest['heart_rate'] ?? '--'; ?> <span class="vital-unit">bpm</span>
-                        </div>
-                    </div>
-                    <?php endif; ?>
-                    
-                    <?php if (in_array('blood_oxygenation', $user['shared_data_types'])): ?>
-                    <div class="col-6">
-                        <div class="vital-label">Oxygen</div>
-                        <div class="vital-value" style="font-size: 1.25rem; color: <?php echo (isset($latest['blood_oxygenation']) && $latest['blood_oxygenation'] < 95) ? 'var(--status-warning)' : 'var(--text-primary)'; ?>">
-                            <?php echo isset($latest['blood_oxygenation']) ? round($latest['blood_oxygenation'], 1) : '--'; ?>%
-                        </div>
-                    </div>
-                    <?php endif; ?>
-                    
-                    <?php if (in_array('agility_score', $user['shared_data_types'])): ?>
-                    <div class="col-6">
-                        <div class="vital-label">Mobility</div>
-                        <div class="vital-value" style="font-size: 1.25rem;">
-                            <?php echo isset($latest['agility_score']) ? round($latest['agility_score']) : '--'; ?>/100
-                        </div>
-                    </div>
-                    <?php endif; ?>
-                </div>
-                
-                <p class="last-activity mb-0">
-                    <i class="bi bi-clock me-1"></i>
-                    Last reading: <?php echo formatRelativeTime($latest['recorded_at']); ?>
-                </p>
-                <?php else: ?>
-                <p class="text-muted mb-0">No recent data available</p>
                 <?php endif; ?>
                 
-                <div class="mt-4">
-                    <span class="btn btn-outline-primary btn-sm">
-                        View Details <i class="bi bi-chevron-right ms-1"></i>
-                    </span>
+                <div class="member-info">
+                    <?php if ($relationshipLabel): ?>
+                    <span class="relationship-tag"><?php echo htmlspecialchars($relationshipLabel); ?></span>
+                    <?php endif; ?>
+                    <h3 class="member-name"><?php echo htmlspecialchars($user['user_name']); ?></h3>
+                    <div class="status-badge status-<?php echo $status; ?>">
+                        <i class="bi bi-<?php echo $statusIcon; ?>"></i>
+                        <span><?php echo ucfirst($statusMessage); ?></span>
+                    </div>
                 </div>
+            </header>
+            
+            <?php if ($userData && isset($userData['data'])): ?>
+            <?php $latest = $userData['data']; ?>
+            
+            <!-- Vitals Grid -->
+            <div class="vitals-summary">
+                <?php if (in_array('blood_pressure', $user['shared_data_types'])): ?>
+                <div class="vital-item <?php echo (isset($latest['htn']) && $latest['htn']) ? 'vital-elevated' : ''; ?>">
+                    <span class="vital-label">Blood Pressure</span>
+                    <span class="vital-value"><?php echo $latest['bp_systolic'] ?? '--'; ?>/<small><?php echo $latest['bp_diastolic'] ?? '--'; ?></small></span>
+                </div>
+                <?php endif; ?>
+                
+                <?php if (in_array('heart_rate', $user['shared_data_types'])): ?>
+                <div class="vital-item">
+                    <span class="vital-label">Heart Rate</span>
+                    <span class="vital-value"><?php echo $latest['heart_rate'] ?? '--'; ?> <small>bpm</small></span>
+                </div>
+                <?php endif; ?>
+                
+                <?php if (in_array('blood_oxygenation', $user['shared_data_types'])): ?>
+                <div class="vital-item <?php echo (isset($latest['blood_oxygenation']) && $latest['blood_oxygenation'] < 95) ? 'vital-warning' : ''; ?>">
+                    <span class="vital-label">Oxygen</span>
+                    <span class="vital-value"><?php echo isset($latest['blood_oxygenation']) ? round($latest['blood_oxygenation'], 1) : '--'; ?><small>%</small></span>
+                </div>
+                <?php endif; ?>
+                
+                <?php if (in_array('agility_score', $user['shared_data_types'])): ?>
+                <div class="vital-item">
+                    <span class="vital-label">Mobility</span>
+                    <span class="vital-value"><?php echo isset($latest['agility_score']) ? round($latest['agility_score']) : '--'; ?><small>/100</small></span>
+                </div>
+                <?php endif; ?>
             </div>
-        </div>
+            
+            <!-- Card Footer -->
+            <footer class="member-footer">
+                <span class="last-reading">
+                    <i class="bi bi-clock"></i>
+                    <?php echo formatRelativeTime($latest['recorded_at']); ?>
+                </span>
+                <span class="view-link">
+                    View Details <i class="bi bi-arrow-right"></i>
+                </span>
+            </footer>
+            <?php else: ?>
+            <div class="no-data-state">
+                <i class="bi bi-hourglass-split"></i>
+                <p>Waiting for first reading</p>
+            </div>
+            <?php endif; ?>
+        </article>
         <?php endforeach; ?>
     </div>
     
     <?php else: ?>
-    <div class="card">
-        <div class="card-body">
-            <div class="empty-state">
-                <i class="bi bi-people empty-icon"></i>
-                <h5 class="empty-title">No One to Monitor</h5>
-                <p class="empty-description">You're not currently monitoring any family members.</p>
-                <a href="../index.php" class="btn btn-primary">Back to Home</a>
+    <div class="empty-dashboard">
+        <div class="empty-illustration">
+            <div class="empty-icon-wrapper">
+                <i class="bi bi-people"></i>
             </div>
         </div>
+        <h2>Your Family Dashboard is Ready</h2>
+        <p>Once family members are connected to your account, their health status will appear here so you can keep an eye on the people who matter most.</p>
+        <a href="../index.php" class="btn btn-primary btn-lg">
+            <i class="bi bi-house me-2"></i>Back to Home
+        </a>
     </div>
     <?php endif; ?>
     
-    <!-- Info Card -->
-    <div class="card mt-5">
-        <div class="card-body text-center">
-            <i class="bi bi-info-circle fs-4 text-primary mb-3 d-block"></i>
-            <h5>Understanding Health Status</h5>
-            <div class="row g-4 mt-3 text-start">
-                <div class="col-md-4">
-                    <div class="d-flex align-items-center gap-2 mb-2">
-                        <div class="status-dot good"></div>
+    <!-- Info Card - Collapsible -->
+    <details class="info-panel mt-5" open>
+        <summary class="info-panel-header">
+            <span class="info-panel-title">
+                <i class="bi bi-info-circle"></i>
+                Understanding Health Status
+            </span>
+            <i class="bi bi-chevron-down toggle-icon"></i>
+        </summary>
+        <div class="info-panel-content">
+            <div class="status-legend">
+                <div class="legend-item">
+                    <div class="legend-indicator good">
+                        <i class="bi bi-check-circle-fill"></i>
+                    </div>
+                    <div class="legend-text">
                         <strong>Doing Well</strong>
+                        <span>All vitals within healthy ranges</span>
                     </div>
-                    <p class="small text-muted mb-0">All vitals are within healthy ranges. No concerns at this time.</p>
                 </div>
-                <div class="col-md-4">
-                    <div class="d-flex align-items-center gap-2 mb-2">
-                        <div class="status-dot warning"></div>
+                <div class="legend-item">
+                    <div class="legend-indicator warning">
+                        <i class="bi bi-exclamation-circle-fill"></i>
+                    </div>
+                    <div class="legend-text">
                         <strong>Needs Attention</strong>
+                        <span>Some readings are slightly elevated</span>
                     </div>
-                    <p class="small text-muted mb-0">Some readings are slightly elevated. Worth keeping an eye on.</p>
                 </div>
-                <div class="col-md-4">
-                    <div class="d-flex align-items-center gap-2 mb-2">
-                        <div class="status-dot alert"></div>
-                        <strong>May Need Care</strong>
+                <div class="legend-item">
+                    <div class="legend-indicator alert">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
                     </div>
-                    <p class="small text-muted mb-0">Readings suggest contacting their healthcare provider may be wise.</p>
+                    <div class="legend-text">
+                        <strong>May Need Care</strong>
+                        <span>Consider contacting their provider</span>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    </details>
 </div>
 
 <!-- Mobile Bottom Nav -->
-<nav class="mobile-nav">
+<nav class="mobile-nav" aria-label="Mobile navigation">
     <ul class="nav">
         <li class="nav-item">
-            <a class="nav-link active" href="index.php?id=<?php echo $monitorId; ?>">
-                <i class="bi bi-house"></i>
-                Home
+            <a class="nav-link active" href="index.php?id=<?php echo $monitorId; ?>" aria-current="page">
+                <span class="nav-icon-wrapper">
+                    <i class="bi bi-house-fill"></i>
+                    <?php if ($alertCount > 0): ?>
+                    <span class="nav-badge" aria-label="<?php echo $alertCount; ?> alerts"><?php echo $alertCount; ?></span>
+                    <?php endif; ?>
+                </span>
+                <span>Family</span>
             </a>
         </li>
         <li class="nav-item">
             <a class="nav-link" href="../index.php">
-                <i class="bi bi-arrow-left-circle"></i>
-                Exit
+                <i class="bi bi-grid"></i>
+                <span>Switch App</span>
             </a>
         </li>
     </ul>
 </nav>
 
 <style>
-/* Monitor-specific styles */
-.monitor-user-card {
-    transition: all 0.3s ease;
+/* ==========================================================================
+   Monitor Dashboard - Premium Styles
+   ========================================================================== */
+
+/* Greeting Header */
+.display-greeting {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--casana-purple) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
-.monitor-user-card:hover {
-    transform: translateY(-8px);
+.lead-subtitle {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
 }
 
-.monitor-user-card .vital-label {
+.alert-summary {
+    color: var(--status-warning);
+    font-weight: 500;
+}
+
+/* Family Grid - Responsive Layout */
+.family-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+@media (min-width: 700px) {
+    .family-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+    }
+}
+
+@media (max-width: 699px) {
+    .family-member-card {
+        padding: 1.25rem;
+    }
+    
+    .member-avatar {
+        width: 56px;
+        height: 56px;
+        min-width: 56px;
+        font-size: 1.25rem;
+    }
+    
+    .member-name {
+        font-size: 1.1rem;
+    }
+    
+    .display-greeting {
+        font-size: 1.5rem;
+    }
+    
+    .lead-subtitle {
+        font-size: 0.95rem;
+    }
+    
+    .page-header-animate {
+        text-align: left;
+        padding-left: 0.5rem;
+    }
+}
+
+/* Family Member Card */
+.family-member-card {
+    position: relative;
+    background: var(--bg-card);
+    border-radius: var(--radius-xl);
+    padding: 1.5rem;
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+}
+
+.family-member-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.15);
+    border-color: transparent;
+}
+
+.family-member-card:focus {
+    outline: 2px solid var(--casana-purple);
+    outline-offset: 2px;
+}
+
+/* Status Bar */
+.status-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--status-success);
+    transition: background 0.3s ease;
+}
+
+.family-member-card.status-warning .status-bar {
+    background: var(--status-warning);
+}
+
+.family-member-card.status-alert .status-bar {
+    background: var(--status-danger);
+    animation: pulse-bar 2s ease-in-out infinite;
+}
+
+@keyframes pulse-bar {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+/* Card Header */
+.member-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.member-avatar {
+    width: 64px;
+    height: 64px;
+    min-width: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    box-shadow: 0 4px 12px -2px rgba(16, 185, 129, 0.4);
+    background-size: cover;
+    background-position: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.family-member-card:hover .member-avatar {
+    transform: scale(1.05);
+}
+
+.member-avatar.avatar-warning {
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    box-shadow: 0 4px 12px -2px rgba(245, 158, 11, 0.4);
+}
+
+.member-avatar.avatar-alert {
+    background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+    box-shadow: 0 4px 12px -2px rgba(239, 68, 68, 0.4);
+}
+
+.member-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.relationship-tag {
+    display: inline-block;
     font-size: 0.7rem;
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--text-muted);
-    margin-bottom: 4px;
+    margin-bottom: 0.25rem;
 }
 
-@media (max-width: 768px) {
-    .monitor-user-card {
-        padding: var(--spacing-lg);
+.member-name {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+
+/* Status Badge */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 100px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.status-badge.status-good {
+    background: rgba(16, 185, 129, 0.12);
+    color: #059669;
+}
+
+.status-badge.status-warning {
+    background: rgba(245, 158, 11, 0.12);
+    color: #d97706;
+}
+
+.status-badge.status-alert {
+    background: rgba(239, 68, 68, 0.12);
+    color: #dc2626;
+    animation: pulse-badge 2s ease-in-out infinite;
+}
+
+[data-theme="dark"] .status-badge.status-good {
+    background: rgba(52, 211, 153, 0.15);
+    color: #34d399;
+}
+
+[data-theme="dark"] .status-badge.status-warning {
+    background: rgba(251, 191, 36, 0.15);
+    color: #fbbf24;
+}
+
+[data-theme="dark"] .status-badge.status-alert {
+    background: rgba(248, 113, 113, 0.15);
+    color: #f87171;
+}
+
+@keyframes pulse-badge {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.85; transform: scale(1.02); }
+}
+
+/* Vitals Summary Grid */
+.vitals-summary {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.vital-item {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    padding: 0.75rem;
+    transition: background 0.2s ease;
+}
+
+.vital-item .vital-label {
+    display: block;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin-bottom: 0.25rem;
+}
+
+.vital-item .vital-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+}
+
+.vital-item .vital-value small {
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-left: 1px;
+}
+
+.vital-item.vital-elevated .vital-value {
+    color: var(--status-danger);
+}
+
+.vital-item.vital-warning .vital-value {
+    color: var(--status-warning);
+}
+
+/* Card Footer */
+.member-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+    margin-top: 0.5rem;
+}
+
+.last-reading {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.last-reading i {
+    font-size: 0.9rem;
+}
+
+.view-link {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--casana-purple);
+    transition: gap 0.2s ease;
+}
+
+.family-member-card:hover .view-link {
+    gap: 0.5rem;
+}
+
+/* No Data State */
+.no-data-state {
+    text-align: center;
+    padding: 1.5rem 0;
+    color: var(--text-muted);
+}
+
+.no-data-state i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    opacity: 0.5;
+}
+
+.no-data-state p {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+/* Empty Dashboard */
+.empty-dashboard {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: var(--bg-card);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border-color);
+}
+
+.empty-icon-wrapper {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 1.5rem;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--casana-purple) 0%, var(--casana-purple-light) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.9;
+}
+
+.empty-icon-wrapper i {
+    font-size: 3rem;
+    color: white;
+}
+
+.empty-dashboard h2 {
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.empty-dashboard p {
+    max-width: 400px;
+    margin: 0 auto 1.5rem;
+    color: var(--text-secondary);
+}
+
+/* Info Panel */
+.info-panel {
+    background: var(--bg-card);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+}
+
+.info-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    list-style: none;
+}
+
+.info-panel-header::-webkit-details-marker {
+    display: none;
+}
+
+.info-panel-header:hover {
+    background: var(--bg-hover);
+}
+
+.info-panel-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.info-panel-title i {
+    color: var(--casana-purple);
+}
+
+.toggle-icon {
+    color: var(--text-muted);
+    transition: transform 0.3s ease;
+}
+
+.info-panel[open] .toggle-icon {
+    transform: rotate(180deg);
+}
+
+.info-panel-content {
+    padding: 1.25rem;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Status Legend */
+.status-legend {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+@media (max-width: 900px) {
+    .status-legend {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
     }
     
-    .user-avatar {
-        width: 60px !important;
-        height: 60px !important;
-        font-size: 1.5rem !important;
+    .legend-item {
+        flex-direction: row;
+        align-items: center;
     }
-    
-    .user-name {
-        font-size: 1.1rem !important;
+}
+
+.legend-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.legend-indicator {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+}
+
+.legend-indicator.good {
+    background: rgba(16, 185, 129, 0.12);
+    color: var(--status-success);
+}
+
+.legend-indicator.warning {
+    background: rgba(245, 158, 11, 0.12);
+    color: var(--status-warning);
+}
+
+.legend-indicator.alert {
+    background: rgba(239, 68, 68, 0.12);
+    color: var(--status-danger);
+}
+
+.legend-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.legend-text strong {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.legend-text span {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+/* Animation Classes */
+.animate-card {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: cardEntrance 0.5s ease-out forwards;
+}
+
+.animate-delay-1 { animation-delay: 0.1s; }
+.animate-delay-2 { animation-delay: 0.2s; }
+.animate-delay-3 { animation-delay: 0.3s; }
+.animate-delay-4 { animation-delay: 0.4s; }
+.animate-delay-5 { animation-delay: 0.5s; }
+
+@keyframes cardEntrance {
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
+}
+
+.page-header-animate {
+    animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Dark Mode Enhancements */
+[data-theme="dark"] .family-member-card {
+    background: linear-gradient(180deg, var(--bg-card) 0%, rgba(15, 23, 42, 0.95) 100%);
+    border-color: rgba(148, 163, 184, 0.1);
+}
+
+[data-theme="dark"] .family-member-card:hover {
+    box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.4);
+    border-color: rgba(99, 102, 241, 0.3);
+}
+
+[data-theme="dark"] .vital-item {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+[data-theme="dark"] .info-panel {
+    background: linear-gradient(180deg, var(--bg-card) 0%, rgba(15, 23, 42, 0.95) 100%);
+}
+
+[data-theme="dark"] .display-greeting {
+    background: linear-gradient(135deg, #f8fafc 0%, #818cf8 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
 }
 </style>
 

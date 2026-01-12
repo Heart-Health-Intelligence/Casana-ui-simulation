@@ -5,6 +5,19 @@
  */
 
 require_once __DIR__ . '/../includes/api-helper.php';
+require_once __DIR__ . '/../includes/alert-taxonomy.php';
+
+// Helper function for time-based greeting
+function getTimeGreeting() {
+    $hour = date('H');
+    if ($hour < 12) {
+        return 'Good morning';
+    }
+    if ($hour < 17) {
+        return 'Good afternoon';
+    }
+    return 'Good evening';
+}
 
 // Get provider ID from URL or session
 $providerId = isset($_GET['id']) ? intval($_GET['id']) : 1;
@@ -18,78 +31,28 @@ $alerts = $api->getAlertRecordings(['per_page' => 10, 'days' => 7]);
 $pageTitle = 'Dashboard';
 $currentPage = 'dashboard';
 $appName = 'provider';
+$alertCount = $alerts ? $alerts['pagination']['total'] : 0;
 
 require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . '/../includes/provider-sidebar.php';
 ?>
 
-<!-- Provider Sidebar -->
-<aside class="sidebar hide-mobile">
-    <div class="sidebar-header">
-        <div class="d-flex align-items-center gap-3">
-            <div class="entity-avatar" style="width: 48px; height: 48px; font-size: 1.25rem;">
-                <?php echo getInitials($provider['name'] ?? 'Dr'); ?>
-            </div>
-            <div>
-                <div class="fw-semibold"><?php echo htmlspecialchars($provider['name'] ?? 'Provider'); ?></div>
-                <div class="small text-muted"><?php echo htmlspecialchars($provider['practice_name'] ?? ''); ?></div>
-            </div>
-        </div>
-    </div>
-    
-    <nav class="sidebar-nav">
-        <ul class="nav flex-column">
-            <li class="nav-item">
-                <a class="nav-link active" href="index.php?id=<?php echo $providerId; ?>">
-                    <i class="bi bi-grid-1x2"></i>
-                    Dashboard
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="patients.php?id=<?php echo $providerId; ?>">
-                    <i class="bi bi-people"></i>
-                    Patients
-                    <span class="badge bg-info-soft ms-auto"><?php echo $provider['total_patients'] ?? 0; ?></span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="alerts.php?id=<?php echo $providerId; ?>">
-                    <i class="bi bi-exclamation-triangle"></i>
-                    Alerts
-                    <?php if ($alerts && $alerts['pagination']['total'] > 0): ?>
-                    <span class="badge bg-danger-soft ms-auto"><?php echo $alerts['pagination']['total']; ?></span>
-                    <?php endif; ?>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="analytics.php?id=<?php echo $providerId; ?>">
-                    <i class="bi bi-graph-up"></i>
-                    Analytics
-                </a>
-            </li>
-        </ul>
-    </nav>
-    
-    <div class="sidebar-footer">
-        <a href="../index.php" class="btn btn-outline-primary w-100">
-            <i class="bi bi-arrow-left me-2"></i>
-            Switch Role
-        </a>
-    </div>
-</aside>
-
 <div class="container-fluid py-4">
-    <!-- Page Header -->
-    <div class="page-header">
+    <!-- Welcome Hero Section -->
+    <div class="welcome-hero mb-4">
         <div class="row align-items-center">
             <div class="col">
-                <h1>Dashboard</h1>
-                <p class="mb-0">Welcome back, <?php echo htmlspecialchars($provider['name'] ?? 'Doctor'); ?></p>
+                <div class="welcome-greeting"><?php echo getTimeGreeting(); ?></div>
+                <h1 class="welcome-name"><?php echo htmlspecialchars($provider['name'] ?? 'Doctor'); ?></h1>
+                <p class="welcome-summary mb-0">
+                    You have <strong><?php echo $alertCount; ?></strong> active alerts and <strong><?php echo $provider['total_patients'] ?? 0; ?></strong> patients in your care
+                </p>
             </div>
-            <div class="col-auto">
-                <span class="text-muted">
-                    <i class="bi bi-clock me-1"></i>
-                    <?php echo date('l, F j, Y'); ?>
-                </span>
+            <div class="col-auto d-none d-md-block">
+                <div class="welcome-date">
+                    <i class="bi bi-calendar3 me-2"></i>
+                    <?php echo date('l, F j'); ?>
+                </div>
             </div>
         </div>
     </div>
@@ -97,34 +60,46 @@ require_once __DIR__ . '/../includes/header.php';
     <!-- Quick Stats -->
     <div class="row g-4 mb-4">
         <div class="col-sm-6 col-xl-3">
-            <div class="card stat-card h-100">
-                <div class="stat-value"><?php echo $provider['total_patients'] ?? 0; ?></div>
-                <div class="stat-label">Total Patients</div>
-            </div>
+            <a href="patients.php?id=<?php echo $providerId; ?>" class="text-decoration-none">
+                <div class="card stat-card stat-card-clickable h-100">
+                    <div class="stat-value"><?php echo $provider['total_patients'] ?? 0; ?></div>
+                    <div class="stat-label">Total Patients</div>
+                    <div class="stat-link"><i class="bi bi-arrow-right"></i></div>
+                </div>
+            </a>
         </div>
         <div class="col-sm-6 col-xl-3">
-            <div class="card stat-card h-100">
-                <div class="stat-value" style="color: var(--status-danger);">
-                    <?php echo $alerts ? $alerts['pagination']['total'] : 0; ?>
+            <a href="alerts.php?id=<?php echo $providerId; ?>" class="text-decoration-none">
+                <div class="card stat-card stat-danger stat-card-clickable h-100">
+                    <div class="stat-value">
+                        <?php echo $alerts ? $alerts['pagination']['total'] : 0; ?>
+                    </div>
+                    <div class="stat-label">Active Alerts</div>
+                    <div class="stat-link"><i class="bi bi-arrow-right"></i></div>
                 </div>
-                <div class="stat-label">Active Alerts</div>
-            </div>
+            </a>
         </div>
         <div class="col-sm-6 col-xl-3">
-            <div class="card stat-card h-100">
-                <div class="stat-value">
-                    <?php echo $populationStats ? round($populationStats['htn_rate'], 1) : 0; ?>%
+            <a href="analytics.php?id=<?php echo $providerId; ?>" class="text-decoration-none">
+                <div class="card stat-card stat-warning stat-card-clickable h-100">
+                    <div class="stat-value">
+                        <?php echo $populationStats ? round($populationStats['htn_rate'], 1) : 0; ?>%
+                    </div>
+                    <div class="stat-label">HTN Rate</div>
+                    <div class="stat-link"><i class="bi bi-arrow-right"></i></div>
                 </div>
-                <div class="stat-label">HTN Rate</div>
-            </div>
+            </a>
         </div>
         <div class="col-sm-6 col-xl-3">
-            <div class="card stat-card h-100">
-                <div class="stat-value" style="color: var(--status-success);">
-                    <?php echo $populationStats ? ($populationStats['patients_with_trends'] ?? 0) : 0; ?>
+            <a href="patients.php?id=<?php echo $providerId; ?>&view=trends" class="text-decoration-none">
+                <div class="card stat-card stat-success stat-card-clickable h-100">
+                    <div class="stat-value">
+                        <?php echo $populationStats ? ($populationStats['patients_with_trends'] ?? 0) : 0; ?>
+                    </div>
+                    <div class="stat-label">Patients with Trends</div>
+                    <div class="stat-link"><i class="bi bi-arrow-right"></i></div>
                 </div>
-                <div class="stat-label">Patients with Trends</div>
-            </div>
+            </a>
         </div>
     </div>
     
@@ -151,9 +126,14 @@ require_once __DIR__ . '/../includes/header.php';
                             </thead>
                             <tbody>
                                 <?php foreach (array_slice($alerts['recordings'], 0, 5) as $alert): ?>
-                                <tr class="table-clickable" onclick="window.location='patient.php?provider=<?php echo $providerId; ?>&id=<?php echo $alert['user_id']; ?>'">
+                                <tr class="table-clickable" 
+                                    tabindex="0" 
+                                    role="button"
+                                    aria-label="View patient <?php echo htmlspecialchars($alert['user_name']); ?>"
+                                    onclick="window.location='patient.php?provider=<?php echo $providerId; ?>&id=<?php echo $alert['user_id']; ?>'"
+                                    onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">
                                     <td>
-                                        <div class="d-flex align-items-center gap-2">
+                                        <a href="patient.php?provider=<?php echo $providerId; ?>&id=<?php echo $alert['user_id']; ?>" class="d-flex align-items-center gap-2 text-decoration-none text-body" onclick="event.stopPropagation();">
                                             <div class="entity-avatar" style="width: 32px; height: 32px; font-size: 0.75rem;">
                                                 <?php echo getInitials($alert['user_name']); ?>
                                             </div>
@@ -161,20 +141,11 @@ require_once __DIR__ . '/../includes/header.php';
                                                 <div class="fw-medium"><?php echo htmlspecialchars($alert['user_name']); ?></div>
                                                 <div class="small text-muted">Age <?php echo $alert['user_age']; ?></div>
                                             </div>
-                                        </div>
+                                        </a>
                                     </td>
                                     <td>
                                         <?php foreach ($alert['alert_reasons'] as $reason): ?>
-                                        <span class="badge bg-danger-soft me-1">
-                                            <?php 
-                                            $labels = [
-                                                'hypertension' => 'HTN',
-                                                'extended_sit' => 'Long Sit',
-                                                'low_spo2' => 'Low O₂'
-                                            ];
-                                            echo $labels[$reason] ?? $reason;
-                                            ?>
-                                        </span>
+                                        <?php echo renderAlertBadge($reason, false, true); ?>
                                         <?php endforeach; ?>
                                     </td>
                                     <td>
@@ -187,7 +158,9 @@ require_once __DIR__ . '/../includes/header.php';
                                         <span class="small text-muted"><?php echo formatRelativeTime($alert['sit_time']); ?></span>
                                     </td>
                                     <td>
-                                        <i class="bi bi-chevron-right text-muted"></i>
+                                        <a href="patient.php?provider=<?php echo $providerId; ?>&id=<?php echo $alert['user_id']; ?>" class="text-muted" aria-label="View patient details" onclick="event.stopPropagation();">
+                                            <i class="bi bi-chevron-right"></i>
+                                        </a>
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>
@@ -346,5 +319,11 @@ require_once __DIR__ . '/../includes/header.php';
         </div>
     </div>
 </div>
+
+<script>
+// Expose data for global search
+window.providerId = <?php echo $providerId; ?>;
+window.providerPatients = <?php echo json_encode($provider['patients'] ?? []); ?>;
+</script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

@@ -23,68 +23,27 @@ $alerts = $api->getAlertRecordings(['per_page' => 5, 'days' => 7]);
 $pageTitle = 'Analytics';
 $currentPage = 'analytics';
 $appName = 'provider';
+$alertCount = $alerts ? $alerts['pagination']['total'] : 0;
 
 require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . '/../includes/provider-sidebar.php';
 ?>
-
-<!-- Provider Sidebar -->
-<aside class="sidebar hide-mobile">
-    <div class="sidebar-header">
-        <div class="d-flex align-items-center gap-3">
-            <div class="entity-avatar" style="width: 48px; height: 48px; font-size: 1.25rem;">
-                <?php echo getInitials($provider['name'] ?? 'Dr'); ?>
-            </div>
-            <div>
-                <div class="fw-semibold"><?php echo htmlspecialchars($provider['name'] ?? 'Provider'); ?></div>
-                <div class="small text-muted"><?php echo htmlspecialchars($provider['practice_name'] ?? ''); ?></div>
-            </div>
-        </div>
-    </div>
-    
-    <nav class="sidebar-nav">
-        <ul class="nav flex-column">
-            <li class="nav-item">
-                <a class="nav-link" href="index.php?id=<?php echo $providerId; ?>">
-                    <i class="bi bi-grid-1x2"></i>
-                    Dashboard
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="patients.php?id=<?php echo $providerId; ?>">
-                    <i class="bi bi-people"></i>
-                    Patients
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="alerts.php?id=<?php echo $providerId; ?>">
-                    <i class="bi bi-exclamation-triangle"></i>
-                    Alerts
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link active" href="analytics.php?id=<?php echo $providerId; ?>">
-                    <i class="bi bi-graph-up"></i>
-                    Analytics
-                </a>
-            </li>
-        </ul>
-    </nav>
-    
-    <div class="sidebar-footer">
-        <a href="../index.php" class="btn btn-outline-primary w-100">
-            <i class="bi bi-arrow-left me-2"></i>
-            Switch Role
-        </a>
-    </div>
-</aside>
 
 <div class="container-fluid py-4">
     <!-- Page Header -->
     <div class="page-header">
         <div class="row align-items-center">
             <div class="col">
-                <h1>Analytics</h1>
-                <p class="mb-0">Population health statistics and usage patterns</p>
+                <h1>Population Analytics</h1>
+                <p class="mb-0">
+                    Health trends and usage patterns across your patient panel
+                    <span class="badge bg-info-soft ms-2"><?php echo $provider['total_patients'] ?? 0; ?> patients</span>
+                </p>
+            </div>
+            <div class="col-auto">
+                <span class="text-muted small">
+                    <i class="bi bi-calendar3 me-1"></i>Last 30 days
+                </span>
             </div>
         </div>
     </div>
@@ -94,27 +53,37 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="col-sm-6 col-xl-3">
             <div class="card stat-card h-100">
                 <div class="stat-value"><?php echo $healthOverview ? round($healthOverview['avg_heart_rate']) : '--'; ?></div>
-                <div class="stat-label">Avg Heart Rate (bpm)</div>
+                <div class="stat-label">Mean Heart Rate</div>
+                <div class="stat-sublabel">bpm (all readings)</div>
             </div>
         </div>
         <div class="col-sm-6 col-xl-3">
-            <div class="card stat-card h-100">
+            <div class="card stat-card stat-success h-100">
                 <div class="stat-value"><?php echo $healthOverview ? round($healthOverview['avg_blood_oxygenation'], 1) : '--'; ?>%</div>
-                <div class="stat-label">Avg SpO₂</div>
+                <div class="stat-label">Mean SpO₂</div>
+                <div class="stat-sublabel">Normal ≥95%</div>
             </div>
         </div>
         <div class="col-sm-6 col-xl-3">
-            <div class="card stat-card h-100">
-                <div class="stat-value" style="color: <?php echo ($healthOverview && $healthOverview['htn_rate'] > 30) ? 'var(--status-danger)' : 'inherit'; ?>">
-                    <?php echo $healthOverview ? round($healthOverview['htn_rate'], 1) : '--'; ?>%
+            <a href="patients.php?id=<?php echo $providerId; ?>" class="text-decoration-none">
+                <?php $htnHigh = $healthOverview && $healthOverview['htn_rate'] > 30; ?>
+                <div class="card stat-card h-100 stat-card-clickable <?php echo $htnHigh ? 'stat-danger' : 'stat-warning'; ?>">
+                    <div class="stat-value">
+                        <?php echo $healthOverview ? round($healthOverview['htn_rate'], 1) : '--'; ?>%
+                    </div>
+                    <div class="stat-label">Hypertension Rate</div>
+                    <div class="stat-sublabel">
+                        % of readings ≥140/90 
+                        <i class="bi bi-box-arrow-up-right ms-1"></i>
+                    </div>
                 </div>
-                <div class="stat-label">HTN Rate</div>
-            </div>
+            </a>
         </div>
         <div class="col-sm-6 col-xl-3">
             <div class="card stat-card h-100">
                 <div class="stat-value"><?php echo $healthOverview ? round($healthOverview['avg_agility_score']) : '--'; ?></div>
-                <div class="stat-label">Avg Agility Score</div>
+                <div class="stat-label">Mean Agility Score</div>
+                <div class="stat-sublabel">Higher = better mobility</div>
             </div>
         </div>
     </div>
@@ -149,26 +118,27 @@ require_once __DIR__ . '/../includes/header.php';
                             <?php endif; ?>
                         </div>
                         <div class="col-md-6">
-                            <h6 class="text-muted mb-3">Health Trends</h6>
+                            <h6 class="text-muted mb-3">BP Trends (30-Day)</h6>
                             <?php if ($populationStats && isset($populationStats['trend_breakdown'])): ?>
                             <div class="d-flex flex-column gap-3">
                                 <?php foreach ($populationStats['trend_breakdown'] as $trend => $count): ?>
-                                <div>
+                                <?php
+                                $total = array_sum($populationStats['trend_breakdown']);
+                                $percent = $total > 0 ? ($count / $total) * 100 : 0;
+                                $color = $trend === 'stable' ? 'var(--status-success)' : ($trend === 'improving' ? 'var(--casana-purple)' : 'var(--status-danger)');
+                                ?>
+                                <a href="patients.php?id=<?php echo $providerId; ?>&status=<?php echo $trend; ?>" class="text-decoration-none text-body trend-drill-down">
                                     <div class="d-flex justify-content-between mb-1">
                                         <span class="text-capitalize"><?php echo $trend; ?></span>
-                                        <span class="fw-semibold"><?php echo $count; ?></span>
+                                        <span class="fw-semibold"><?php echo $count; ?> <i class="bi bi-chevron-right small"></i></span>
                                     </div>
                                     <div class="progress" style="height: 6px;">
-                                        <?php
-                                        $total = array_sum($populationStats['trend_breakdown']);
-                                        $percent = $total > 0 ? ($count / $total) * 100 : 0;
-                                        $color = $trend === 'stable' ? 'var(--status-success)' : ($trend === 'improving' ? 'var(--casana-purple)' : 'var(--status-danger)');
-                                        ?>
                                         <div class="progress-bar" style="width: <?php echo $percent; ?>%; background-color: <?php echo $color; ?>"></div>
                                     </div>
-                                </div>
+                                </a>
                                 <?php endforeach; ?>
                             </div>
+                            <p class="small text-muted mt-3 mb-0">Click to view patients by trend</p>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -182,40 +152,49 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="col-lg-8">
             <div class="chart-container h-100">
                 <div class="chart-header">
-                    <h5 class="chart-title">Daily Usage Patterns</h5>
-                    <span class="small text-muted">Average bathroom visits by hour</span>
+                    <h5 class="chart-title">Reading Time Distribution</h5>
+                    <span class="small text-muted">Average readings by hour (last 7 days)</span>
                 </div>
                 <div style="height: 300px;">
                     <canvas id="hourlyChart"></canvas>
                 </div>
+                <p class="small text-muted mt-2 mb-0">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Shows when patients typically take readings. Useful for identifying adherence patterns.
+                </p>
             </div>
         </div>
         
         <div class="col-lg-4">
             <div class="card h-100">
                 <div class="card-header">
-                    <i class="bi bi-stopwatch me-2"></i>Sit Duration Analysis
+                    <i class="bi bi-stopwatch me-2"></i>Reading Duration Metrics
                 </div>
                 <div class="card-body">
                     <?php if ($durationAnalysis): ?>
-                    <div class="mb-4">
+                    <div class="mb-3">
                         <div class="d-flex justify-content-between mb-2">
-                            <span class="text-muted">Average Duration</span>
+                            <span class="text-muted">Mean Session Duration</span>
                             <span class="fw-semibold"><?php echo round($durationAnalysis['avg_duration_seconds'] / 60, 1); ?> min</span>
                         </div>
                         <div class="d-flex justify-content-between mb-2">
-                            <span class="text-muted">Extended Sits (20+ min)</span>
+                            <span class="text-muted">Extended Sessions (≥20 min)</span>
                             <span class="fw-semibold"><?php echo round($durationAnalysis['extended_sits_percentage'], 1); ?>%</span>
                         </div>
                         <div class="d-flex justify-content-between">
-                            <span class="text-muted">Very Long Sits (30+ min)</span>
+                            <span class="text-muted">Prolonged Sessions (≥30 min)</span>
                             <span class="fw-semibold text-warning"><?php echo round($durationAnalysis['very_long_sits_percentage'], 1); ?>%</span>
                         </div>
                     </div>
                     
+                    <p class="small text-muted mb-3">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Prolonged durations may indicate mobility issues or GI concerns.
+                    </p>
+                    
                     <?php if (isset($durationAnalysis['by_age_group'])): ?>
                     <hr>
-                    <h6 class="text-muted mb-3">By Age Group</h6>
+                    <h6 class="text-muted mb-3">Mean Duration by Age</h6>
                     <div class="d-flex flex-column gap-2">
                         <?php foreach ($durationAnalysis['by_age_group'] as $group => $data): ?>
                         <div class="d-flex justify-content-between align-items-center">
@@ -362,6 +341,60 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// Expose data for global search
+window.providerId = <?php echo $providerId; ?>;
+window.providerPatients = <?php echo json_encode($provider['patients'] ?? []); ?>;
 </script>
+
+<style>
+/* Analytics Page Styles */
+.stat-card-clickable {
+    cursor: pointer;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+}
+
+.stat-card-clickable:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--casana-purple);
+}
+
+.trend-drill-down {
+    display: block;
+    padding: var(--spacing-sm);
+    margin: calc(-1 * var(--spacing-sm));
+    border-radius: var(--radius-md);
+    transition: background-color var(--transition-fast);
+}
+
+.trend-drill-down:hover {
+    background: var(--bg-hover);
+}
+
+.trend-drill-down .bi-chevron-right {
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.trend-drill-down:hover .bi-chevron-right {
+    opacity: 1;
+}
+
+.stat-context {
+    font-size: 0.75rem;
+}
+
+/* Status Overview Cards */
+.status-overview-card {
+    cursor: pointer;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.status-overview-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+</style>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>
