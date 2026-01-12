@@ -10,6 +10,11 @@ if (strpos($_SERVER['REQUEST_URI'], '/user/') !== false) {
 } elseif (strpos($_SERVER['REQUEST_URI'], '/provider/') !== false) {
     $basePath = '..';
 }
+
+// Include health thresholds for JS export (if not already included)
+if (!function_exists('exportHealthThresholdsJS')) {
+    require_once __DIR__ . '/health-thresholds.php';
+}
 ?>
 
 <!-- Bootstrap JS -->
@@ -22,8 +27,12 @@ if (strpos($_SERVER['REQUEST_URI'], '/user/') !== false) {
 <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
 
+<!-- Health Thresholds (shared between PHP and JS) -->
+<?php echo exportHealthThresholdsJS(); ?>
+
 <!-- Casana Scripts -->
 <script src="<?php echo $basePath; ?>/assets/js/theme.js"></script>
+<script src="<?php echo $basePath; ?>/assets/js/preferences.js"></script>
 <script src="<?php echo $basePath; ?>/assets/js/api.js"></script>
 <script src="<?php echo $basePath; ?>/assets/js/charts.js"></script>
 

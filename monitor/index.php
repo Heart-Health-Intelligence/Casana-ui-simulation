@@ -26,7 +26,7 @@ if ($monitorMetadata && isset($monitorMetadata['metadata'])) {
     }
 }
 
-// Count alerts for badge
+// Count alerts for badge using centralized health status
 $alertCount = 0;
 $familyCount = 0;
 if ($monitor && !empty($monitor['monitored_users'])) {
@@ -34,8 +34,8 @@ if ($monitor && !empty($monitor['monitored_users'])) {
     foreach ($monitor['monitored_users'] as $u) {
         $uData = $api->getMonitoredUserData($monitorId, $u['user_id']);
         if ($uData && isset($uData['data'])) {
-            $d = $uData['data'];
-            if ((isset($d['htn']) && $d['htn']) || (isset($d['blood_oxygenation']) && $d['blood_oxygenation'] < 92)) {
+            $status = getHealthStatus($uData['data']);
+            if ($status === STATUS_WARNING || $status === STATUS_ALERT) {
                 $alertCount++;
             }
         }
@@ -76,9 +76,27 @@ require_once __DIR__ . '/../includes/header.php';
         </p>
     </div>
     
+    <!-- Filter Chips -->
+    <?php if ($monitor && !empty($monitor['monitored_users']) && $familyCount > 1): ?>
+    <div class="filter-chips mb-4 d-flex flex-wrap gap-2 justify-content-center">
+        <button class="filter-chip active" data-filter="all" onclick="filterFamily('all', this)">
+            <i class="bi bi-people"></i> All
+        </button>
+        <button class="filter-chip" data-filter="alert" onclick="filterFamily('alert', this)">
+            <i class="bi bi-exclamation-triangle"></i> Needs Care
+        </button>
+        <button class="filter-chip" data-filter="warning" onclick="filterFamily('warning', this)">
+            <i class="bi bi-exclamation-circle"></i> Needs Attention
+        </button>
+        <button class="filter-chip" data-filter="good" onclick="filterFamily('good', this)">
+            <i class="bi bi-check-circle"></i> Doing Well
+        </button>
+    </div>
+    <?php endif; ?>
+    
     <!-- Monitored Users Grid -->
     <?php if ($monitor && !empty($monitor['monitored_users'])): ?>
-    <div class="family-grid">
+    <div class="family-grid" id="familyGrid">
         <?php $cardIndex = 0; ?>
         <?php foreach ($monitor['monitored_users'] as $user): ?>
         <?php $cardIndex++; ?>
@@ -86,7 +104,7 @@ require_once __DIR__ . '/../includes/header.php';
         // Get user's latest data
         $userData = $api->getMonitoredUserData($monitorId, $user['user_id']);
         
-        // Determine health status
+        // Determine health status using centralized function
         $status = 'good';
         $statusMessage = 'is doing well';
         $statusClass = 'status-good';
@@ -94,14 +112,13 @@ require_once __DIR__ . '/../includes/header.php';
         
         if ($userData && isset($userData['data'])) {
             $latest = $userData['data'];
-            if (isset($latest['htn']) && $latest['htn']) {
-                $status = 'warning';
+            $status = getHealthStatus($latest);
+            
+            if ($status === STATUS_WARNING) {
                 $statusMessage = 'needs attention';
                 $statusClass = 'status-warning';
                 $statusIcon = 'exclamation-circle-fill';
-            }
-            if (isset($latest['blood_oxygenation']) && $latest['blood_oxygenation'] < 92) {
-                $status = 'alert';
+            } else if ($status === STATUS_ALERT) {
                 $statusMessage = 'may need care';
                 $statusClass = 'status-alert';
                 $statusIcon = 'exclamation-triangle-fill';
@@ -122,10 +139,13 @@ require_once __DIR__ . '/../includes/header.php';
         }
         ?>
         <article class="family-member-card <?php echo $statusClass; ?> animate-card animate-delay-<?php echo min($cardIndex, 5); ?>" 
-                 onclick="window.location='user.php?monitor=<?php echo $monitorId; ?>&id=<?php echo $user['user_id']; ?>'"
+                 data-status="<?php echo $status; ?>"
+                 data-href="user.php?monitor=<?php echo $monitorId; ?>&id=<?php echo $user['user_id']; ?>"
+                 onclick="navigateToCard(this)"
+                 onkeydown="handleCardKeydown(event, this)"
                  role="button"
                  tabindex="0"
-                 aria-label="View details for <?php echo htmlspecialchars($user['user_name']); ?>">
+                 aria-label="View details for <?php echo htmlspecialchars($user['user_name']); ?>. Status: <?php echo $statusMessage; ?>">
             
             <!-- Status indicator bar -->
             <div class="status-bar"></div>
@@ -173,7 +193,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <?php endif; ?>
                 
                 <?php if (in_array('blood_oxygenation', $user['shared_data_types'])): ?>
-                <div class="vital-item <?php echo (isset($latest['blood_oxygenation']) && $latest['blood_oxygenation'] < 95) ? 'vital-warning' : ''; ?>">
+                <div class="vital-item <?php echo (isset($latest['blood_oxygenation']) && $latest['blood_oxygenation'] < SPO2_NORMAL_MIN) ? 'vital-warning' : ''; ?>">
                     <span class="vital-label">Oxygen</span>
                     <span class="vital-value"><?php echo isset($latest['blood_oxygenation']) ? round($latest['blood_oxygenation'], 1) : '--'; ?><small>%</small></span>
                 </div>
@@ -830,5 +850,65 @@ require_once __DIR__ . '/../includes/header.php';
     background-clip: text;
 }
 </style>
+
+<script>
+// Keyboard activation for cards
+function handleCardKeydown(event, card) {
+    if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        navigateToCard(card);
+    }
+}
+
+function navigateToCard(card) {
+    var href = card.getAttribute('data-href');
+    if (href) {
+        window.location.href = href;
+    }
+}
+
+// Filter family members by status
+function filterFamily(status, button) {
+    // Update active button
+    document.querySelectorAll('.filter-chip').forEach(function(chip) {
+        chip.classList.remove('active');
+    });
+    button.classList.add('active');
+    
+    // Filter cards
+    var cards = document.querySelectorAll('.family-member-card');
+    cards.forEach(function(card) {
+        var cardStatus = card.getAttribute('data-status');
+        if (status === 'all') {
+            card.style.display = '';
+        } else if (cardStatus === status) {
+            card.style.display = '';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+    
+    // Update URL without reload (for bookmarking)
+    var url = new URL(window.location.href);
+    if (status === 'all') {
+        url.searchParams.delete('filter');
+    } else {
+        url.searchParams.set('filter', status);
+    }
+    history.replaceState(null, '', url);
+}
+
+// Apply filter from URL on page load
+document.addEventListener('DOMContentLoaded', function() {
+    var urlParams = new URLSearchParams(window.location.search);
+    var filter = urlParams.get('filter');
+    if (filter) {
+        var button = document.querySelector('.filter-chip[data-filter="' + filter + '"]');
+        if (button) {
+            filterFamily(filter, button);
+        }
+    }
+});
+</script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

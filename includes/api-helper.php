@@ -4,9 +4,20 @@
  * Server-side API calls for PHP pages
  */
 
+// Include centralized health thresholds and config
+require_once __DIR__ . '/health-thresholds.php';
+require_once __DIR__ . '/../config/config.php';
+
 class CasanaAPI {
-    private $baseUrl = 'https://casana.mcchord.net/api';
-    private $apiKey = 'dev-key-12345';
+    private $baseUrl;
+    private $apiKey;
+    private $timeout;
+    
+    public function __construct() {
+        $this->baseUrl = config('api.base_url', 'https://casana.mcchord.net/api');
+        $this->apiKey = config('api.key', '');
+        $this->timeout = config('api.timeout', 30);
+    }
     
     /**
      * Make an API request
@@ -26,7 +37,7 @@ class CasanaAPI {
             'http' => [
                 'method' => 'GET',
                 'header' => "X-API-Key: {$this->apiKey}\r\nContent-Type: application/json\r\n",
-                'timeout' => 30,
+                'timeout' => $this->timeout,
             ],
         ]);
         
@@ -319,7 +330,7 @@ class CasanaAPI {
                 'method' => 'POST',
                 'header' => "X-API-Key: {$this->apiKey}\r\nContent-Type: application/json\r\n",
                 'content' => json_encode($data),
-                'timeout' => 30,
+                'timeout' => $this->timeout,
             ],
         ]);
         
@@ -343,7 +354,7 @@ class CasanaAPI {
                 'method' => 'PUT',
                 'header' => "X-API-Key: {$this->apiKey}\r\nContent-Type: application/json\r\n",
                 'content' => json_encode($data),
-                'timeout' => 30,
+                'timeout' => $this->timeout,
             ],
         ]);
         
@@ -366,7 +377,7 @@ class CasanaAPI {
             'http' => [
                 'method' => 'DELETE',
                 'header' => "X-API-Key: {$this->apiKey}\r\nContent-Type: application/json\r\n",
-                'timeout' => 30,
+                'timeout' => $this->timeout,
             ],
         ]);
         
@@ -489,75 +500,26 @@ function getInitials($name) {
 
 /**
  * Get health status from vital data
+ * Uses centralized thresholds from health-thresholds.php
  * 
  * @param array $data Vital signs data
  * @return string 'good', 'warning', or 'alert'
- * 
- * Blood Pressure Classifications (per AHA):
- * - Normal: <120/<80
- * - Elevated: 120-129/<80 (warning - monitor closely)
- * - High Stage 1: 130-139/80-89 (alert - consider provider)
- * - High Stage 2: >=140/>=90 (alert - contact provider)
  */
 function getHealthStatus($data) {
-    // Check blood pressure
-    $systolic = isset($data['bp_systolic']) ? $data['bp_systolic'] : 0;
-    $diastolic = isset($data['bp_diastolic']) ? $data['bp_diastolic'] : 0;
-    
-    // High Stage 2 (>=140/>=90) - requires provider contact
-    if ($systolic >= 140 || $diastolic >= 90) {
-        return 'alert';
-    }
-    
-    // High Stage 1 (130-139/80-89) - should consider provider
-    if ($systolic >= 130 || $diastolic >= 80) {
-        return 'alert';
-    }
-    
-    // Elevated (120-129/<80) - monitor closely, no provider contact needed
-    if ($systolic >= 120) {
-        return 'warning';
-    }
-    
-    // Check oxygen - critical levels
-    $spo2 = isset($data['blood_oxygenation']) ? $data['blood_oxygenation'] : 100;
-    if ($spo2 < 92) {
-        return 'alert';
-    }
-    if ($spo2 < 95) {
-        return 'warning';
-    }
-    
-    // Check heart rate - outside normal range
-    $hr = isset($data['heart_rate']) ? $data['heart_rate'] : 75;
-    if ($hr < 50 || $hr > 120) {
-        return 'alert';
-    }
-    if ($hr < 60 || $hr > 100) {
-        return 'warning';
-    }
-    
-    return 'good';
+    return getHealthStatusFromVitals($data);
 }
 
 /**
  * Get detailed BP status level
+ * Uses centralized thresholds from health-thresholds.php
  * 
  * @param int $systolic Systolic BP
  * @param int $diastolic Diastolic BP
  * @return string 'normal', 'elevated', 'high', or 'critical'
  */
 function getBPStatus($systolic, $diastolic) {
-    if ($systolic >= 140 || $diastolic >= 90) {
-        return 'critical'; // High Stage 2
-    }
-    if ($systolic >= 130 || $diastolic >= 80) {
-        return 'high'; // High Stage 1
-    }
-    if ($systolic >= 120) {
-        return 'elevated'; // Elevated
-    }
-    return 'normal';
+    $classification = getBPClassification($systolic, $diastolic);
+    return $classification['status'];
 }
 
 /**

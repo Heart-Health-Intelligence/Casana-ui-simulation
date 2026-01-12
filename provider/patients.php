@@ -273,18 +273,41 @@ document.addEventListener('DOMContentLoaded', function() {
     enrichPatientData();
     
     // Update filteredPatients with enriched data
-    filteredPatients = [...patients];
+    filteredPatients = patients.slice();
     
-    // Check for view URL parameter and activate corresponding filter
-    const urlParams = new URLSearchParams(window.location.search);
-    const viewParam = urlParams.get('view');
+    // Check for URL parameters and restore filter state
+    var urlParams = new URLSearchParams(window.location.search);
+    var viewParam = urlParams.get('view');
+    var searchParam = urlParams.get('search');
+    var statusParam = urlParams.get('status');
+    var ageParam = urlParams.get('age');
+    var genderParam = urlParams.get('gender');
+    var recencyParam = urlParams.get('recency');
+    
+    // Restore form values from URL
+    if (searchParam) {
+        document.getElementById('searchInput').value = searchParam;
+    }
+    if (statusParam) {
+        document.getElementById('statusFilter').value = statusParam;
+    }
+    if (ageParam) {
+        document.getElementById('ageFilter').value = ageParam;
+    }
+    if (genderParam) {
+        document.getElementById('genderFilter').value = genderParam;
+    }
+    if (recencyParam) {
+        document.getElementById('recencyFilter').value = recencyParam;
+    }
+    
     if (viewParam) {
-        const validViews = ['all', 'needs-review', 'inactive', 'trends', 'deteriorating', 'stable'];
-        if (validViews.includes(viewParam)) {
+        var validViews = ['all', 'needs-review', 'inactive', 'trends', 'deteriorating', 'stable'];
+        if (validViews.indexOf(viewParam) !== -1) {
             currentQuickView = viewParam;
             // Update filter chip active state
-            document.querySelectorAll('.filter-chip[data-view]').forEach(b => b.classList.remove('active'));
-            const targetChip = document.querySelector(`.filter-chip[data-view="${viewParam}"]`);
+            document.querySelectorAll('.filter-chip[data-view]').forEach(function(b) { b.classList.remove('active'); });
+            var targetChip = document.querySelector('.filter-chip[data-view="' + viewParam + '"]');
             if (targetChip) {
                 targetChip.classList.add('active');
             }
@@ -297,6 +320,9 @@ document.addEventListener('DOMContentLoaded', function() {
             sortPatients();
             renderPatients();
         }
+    } else if (searchParam || statusParam || ageParam || genderParam || recencyParam) {
+        // If any other filters are set, apply them
+        applyFilters();
     } else {
         sortPatients();
         renderPatients();
@@ -310,59 +336,131 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('recencyFilter').addEventListener('change', applyFilters);
     
     // Quick view buttons (filter chips)
-    document.querySelectorAll('.filter-chip[data-view]').forEach(btn => {
+    document.querySelectorAll('.filter-chip[data-view]').forEach(function(btn) {
         btn.addEventListener('click', function() {
-            document.querySelectorAll('.filter-chip[data-view]').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.filter-chip[data-view]').forEach(function(b) { b.classList.remove('active'); });
             this.classList.add('active');
             currentQuickView = this.dataset.view;
+            updateURLState();
             applyFilters();
         });
     });
 });
 
-// Enrich patient data with computed fields
-function enrichPatientData() {
-    const now = Date.now();
-    const dayMs = 24 * 60 * 60 * 1000;
+// Update URL state for bookmarking and sharing
+function updateURLState() {
+    var url = new URL(window.location.href);
     
-    patients = patients.map(patient => {
-        const lastRecordingDate = patient.last_recording ? new Date(patient.last_recording).getTime() : 0;
-        const daysSinceReading = lastRecordingDate ? Math.floor((now - lastRecordingDate) / dayMs) : 999;
+    if (currentQuickView && currentQuickView !== 'all') {
+        url.searchParams.set('view', currentQuickView);
+    } else {
+        url.searchParams.delete('view');
+    }
+    
+    // Persist other filter state
+    var search = document.getElementById('searchInput').value;
+    var status = document.getElementById('statusFilter').value;
+    var age = document.getElementById('ageFilter').value;
+    var gender = document.getElementById('genderFilter').value;
+    var recency = document.getElementById('recencyFilter').value;
+    
+    if (search) {
+        url.searchParams.set('search', search);
+    } else {
+        url.searchParams.delete('search');
+    }
+    
+    if (status) {
+        url.searchParams.set('status', status);
+    } else {
+        url.searchParams.delete('status');
+    }
+    
+    if (age) {
+        url.searchParams.set('age', age);
+    } else {
+        url.searchParams.delete('age');
+    }
+    
+    if (gender) {
+        url.searchParams.set('gender', gender);
+    } else {
+        url.searchParams.delete('gender');
+    }
+    
+    if (recency) {
+        url.searchParams.set('recency', recency);
+    } else {
+        url.searchParams.delete('recency');
+    }
+    
+    history.replaceState(null, '', url);
+}
+
+// Enrich patient data with computed fields
+// Note: Adherence is calculated from recordings_count over 7 days
+// Alert counts come from API if available or are computed from trend type
+function enrichPatientData() {
+    var now = Date.now();
+    var dayMs = 24 * 60 * 60 * 1000;
+    
+    patients = patients.map(function(patient) {
+        var lastRecordingDate = patient.last_recording ? new Date(patient.last_recording).getTime() : 0;
+        var daysSinceReading = lastRecordingDate ? Math.floor((now - lastRecordingDate) / dayMs) : 999;
         
-        // Calculate adherence (recordings in last 7 days / 7)
-        // Using a simple heuristic since we don't have detailed data
-        let adherence = 0;
-        if (daysSinceReading === 0) {
-            adherence = Math.min(100, Math.random() * 30 + 70); // Active today: 70-100%
-        } else if (daysSinceReading <= 3) {
-            adherence = Math.min(100, Math.random() * 30 + 40); // Recent: 40-70%
+        // Calculate adherence based on recent recordings
+        // If patient has recordings_count from API, use it; otherwise estimate from last_recording
+        // Adherence = at least 1 reading per day, so 7 readings = 100% for the week
+        var adherence = null; // null means "not available"
+        
+        if (typeof patient.recordings_count === 'number') {
+            // Use actual data if available
+            adherence = Math.min(100, Math.round((patient.recordings_count / 7) * 100));
         } else if (daysSinceReading <= 7) {
-            adherence = Math.min(100, Math.random() * 30 + 20); // Week: 20-50%
+            // Estimate: if last reading was recent, they're at least somewhat adherent
+            // This is a rough estimate - in production, fetch actual recordings count
+            if (daysSinceReading === 0) {
+                adherence = 70; // Active today - assume at least partial adherence
+            } else if (daysSinceReading <= 3) {
+                adherence = 50;
+            } else {
+                adherence = 30;
+            }
         } else {
-            adherence = Math.random() * 20; // Inactive: 0-20%
+            adherence = 0; // No readings in 7+ days
         }
         
-        // Simulate alert count (would come from real data)
-        const alertCount = patient.trend_type === 'deteriorating' ? Math.floor(Math.random() * 3) + 1 : 
-                          (patient.trend_type === 'stable' ? 0 : Math.floor(Math.random() * 2));
+        // Alert count - use API data if available, otherwise derive from trend
+        // In production, this should come from the alerts endpoint per patient
+        var alertCount = 0;
+        if (typeof patient.alert_count === 'number') {
+            alertCount = patient.alert_count;
+        } else if (patient.trend_type === 'deteriorating') {
+            alertCount = 1; // At minimum, flag deteriorating patients
+        }
         
-        return {
-            ...patient,
-            daysSinceReading,
-            adherence: Math.round(adherence),
-            alertCount,
+        // Needs review flag - based on deteriorating trend or alerts
+        var needsReview = alertCount > 0 || patient.trend_type === 'deteriorating';
+        
+        return Object.assign({}, patient, {
+            daysSinceReading: daysSinceReading,
+            adherence: adherence,
+            alertCount: alertCount,
             isInactive: daysSinceReading > 7,
-            needsReview: alertCount > 0 || patient.trend_type === 'deteriorating'
-        };
+            needsReview: needsReview
+        });
     });
 }
 
 function applyFilters() {
-    const search = document.getElementById('searchInput').value.toLowerCase();
-    const status = document.getElementById('statusFilter').value;
-    const age = document.getElementById('ageFilter').value;
-    const gender = document.getElementById('genderFilter').value;
-    const recency = document.getElementById('recencyFilter').value;
+    var search = document.getElementById('searchInput').value.toLowerCase();
+    var status = document.getElementById('statusFilter').value;
+    var age = document.getElementById('ageFilter').value;
+    var gender = document.getElementById('genderFilter').value;
+    var recency = document.getElementById('recencyFilter').value;
+    
+    // Persist filter state to URL
+    updateURLState();
     
     filteredPatients = patients.filter(patient => {
         // Quick view filter

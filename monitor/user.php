@@ -15,6 +15,15 @@ $monitor = $api->getMonitor($monitorId);
 $userData = $api->getMonitoredUserData($monitorId, $userId);
 $trends = $api->getUserTrends($userId, ['days' => 14]);
 
+// Fetch recordings for last 7 days for weekly summary
+$history = [];
+$weekRecordings = $api->getUserRecordings($userId, ['per_page' => 50]);
+if ($weekRecordings && isset($weekRecordings['recordings'])) {
+    $history = array_filter($weekRecordings['recordings'], function($r) {
+        return strtotime($r['sit_time']) > strtotime('-7 days');
+    });
+}
+
 // Find the monitored user info
 $monitoredUser = null;
 $userNotFound = true;
@@ -93,20 +102,19 @@ $firstName = $monitoredUser ? explode(' ', $userName)[0] : 'this person';
     <?php else: ?>
     
     <?php 
-    // Calculate status early
+    // Calculate status using centralized health thresholds
     $status = 'good';
     $statusText = 'is doing well';
     $statusIcon = 'check-circle-fill';
     
     if ($userData && isset($userData['data'])) {
         $latest = $userData['data'];
-        if (isset($latest['htn']) && $latest['htn']) {
-            $status = 'warning';
+        $status = getHealthStatus($latest);
+        
+        if ($status === STATUS_WARNING) {
             $statusText = 'needs attention';
             $statusIcon = 'exclamation-circle-fill';
-        }
-        if (isset($latest['blood_oxygenation']) && $latest['blood_oxygenation'] < 92) {
-            $status = 'alert';
+        } else if ($status === STATUS_ALERT) {
             $statusText = 'may need care';
             $statusIcon = 'exclamation-triangle-fill';
         }
@@ -132,11 +140,11 @@ $firstName = $monitoredUser ? explode(' ', $userName)[0] : 'this person';
         <div class="profile-info">
             <?php if ($relationshipLabel): ?>
             <span class="relationship-label"><?php echo htmlspecialchars($relationshipLabel); ?></span>
-            <button class="btn-edit-relationship" onclick="editRelationship()" title="Edit relationship label">
+            <button class="btn-edit-relationship" data-bs-toggle="modal" data-bs-target="#editRelationshipModal" title="Edit relationship label">
                 <i class="bi bi-pencil"></i>
             </button>
             <?php else: ?>
-            <button class="btn-add-relationship" onclick="editRelationship()" title="Add a relationship label (e.g., Mom, Dad, Grandma)">
+            <button class="btn-add-relationship" data-bs-toggle="modal" data-bs-target="#editRelationshipModal" title="Add a relationship label (e.g., Mom, Dad, Grandma)">
                 <i class="bi bi-plus-circle me-1"></i>Add relationship
             </button>
             <?php endif; ?>
@@ -231,10 +239,10 @@ $firstName = $monitoredUser ? explode(' ', $userName)[0] : 'this person';
             <?php 
             $hrStatus = 'Normal';
             $hrStatusClass = 'status-good';
-            if ($latest['heart_rate'] < 60) {
+            if ($latest['heart_rate'] < HR_NORMAL_MIN) {
                 $hrStatus = 'Low';
                 $hrStatusClass = 'status-warning';
-            } elseif ($latest['heart_rate'] > 100) {
+            } elseif ($latest['heart_rate'] > HR_NORMAL_MAX) {
                 $hrStatus = 'High';
                 $hrStatusClass = 'status-warning';
             }
@@ -247,7 +255,7 @@ $firstName = $monitoredUser ? explode(' ', $userName)[0] : 'this person';
     <!-- Secondary Vitals -->
     <div class="secondary-vitals animate-in animate-delay-3">
         <?php if (in_array('blood_oxygenation', $sharedTypes)): ?>
-        <div class="secondary-vital-card <?php echo ($latest['blood_oxygenation'] < 95) ? 'vital-warning' : ''; ?>">
+        <div class="secondary-vital-card <?php echo ($latest['blood_oxygenation'] < SPO2_NORMAL_MIN) ? 'vital-warning' : ''; ?>">
             <div class="secondary-vital-icon oxygen">
                 <i class="bi bi-lungs"></i>
             </div>
@@ -256,10 +264,10 @@ $firstName = $monitoredUser ? explode(' ', $userName)[0] : 'this person';
             <?php 
             $o2Status = 'Normal';
             $o2Class = 'status-good';
-            if ($latest['blood_oxygenation'] < 92) {
+            if ($latest['blood_oxygenation'] < SPO2_MILD_LOW_MIN) {
                 $o2Status = 'Low';
                 $o2Class = 'status-alert';
-            } elseif ($latest['blood_oxygenation'] < 95) {
+            } elseif ($latest['blood_oxygenation'] < SPO2_NORMAL_MIN) {
                 $o2Status = 'Low';
                 $o2Class = 'status-warning';
             }
@@ -633,6 +641,53 @@ $firstName = $monitoredUser ? explode(' ', $userName)[0] : 'this person';
         </div>
     </div>
 </div>
+<!-- Edit Relationship Modal -->
+<div class="modal fade" id="editRelationshipModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Set Relationship</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-3">What is <?php echo htmlspecialchars($firstName); ?> to you?</p>
+                
+                <!-- Quick Select Chips -->
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                    <?php 
+                    $commonRelationships = ['Mom', 'Dad', 'Grandma', 'Grandpa', 'Spouse', 'Parent', 'Aunt', 'Uncle', 'Sibling'];
+                    foreach ($commonRelationships as $rel): 
+                    ?>
+                    <button type="button" class="btn btn-outline-primary btn-sm rounded-pill relationship-quick-btn" onclick="selectRelationship('<?php echo $rel; ?>')">
+                        <?php echo $rel; ?>
+                    </button>
+                    <?php endforeach; ?>
+                </div>
+                
+                <!-- Custom Input -->
+                <div class="mb-3">
+                    <label class="form-label small text-muted">Or enter a custom label:</label>
+                    <input type="text" class="form-control" id="relationshipInput" 
+                           value="<?php echo htmlspecialchars($relationshipLabel ?? ''); ?>" 
+                           placeholder="e.g., My grandmother"
+                           maxlength="50">
+                </div>
+                
+                <div id="relationshipSaveStatus" class="small mb-2" style="display: none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveRelationship()" id="saveRelationshipBtn">
+                    <span class="btn-text">Save</span>
+                    <span class="btn-loading" style="display: none;">
+                        <span class="spinner-border spinner-border-sm me-1"></span>Saving...
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <?php endif; // End modals condition ?>
 
 <!-- Mobile Bottom Nav -->
@@ -1916,23 +1971,89 @@ document.addEventListener('DOMContentLoaded', function() {
 <?php endif; ?>
 
 <script>
-// Relationship label editing
-function editRelationship() {
-    const currentLabel = '<?php echo htmlspecialchars($relationshipLabel ?? '', ENT_QUOTES); ?>';
-    const suggestions = ['Mom', 'Dad', 'Grandma', 'Grandpa', 'Spouse', 'Parent', 'Aunt', 'Uncle'];
-    
-    let newLabel = prompt(
-        'Enter a relationship label for <?php echo htmlspecialchars($firstName ?? "this person", ENT_QUOTES); ?>:\n\n' +
-        'Suggestions: ' + suggestions.join(', '),
-        currentLabel
-    );
-    
-    if (newLabel !== null && newLabel.trim() !== currentLabel) {
-        // In production, this would make an API call to save the relationship
-        alert('Relationship label would be saved as: "' + newLabel.trim() + '"\n\nThis feature requires API integration.');
-        // window.location.reload(); // Uncomment when API is connected
-    }
+var monitorId = <?php echo $monitorId; ?>;
+var userId = <?php echo $userId; ?>;
+
+// Relationship editing functions
+function selectRelationship(label) {
+    document.getElementById('relationshipInput').value = label;
+    // Update visual selection
+    document.querySelectorAll('.relationship-quick-btn').forEach(function(btn) {
+        btn.classList.remove('active');
+        if (btn.textContent.trim() === label) {
+            btn.classList.add('active');
+        }
+    });
 }
+
+function saveRelationship() {
+    var input = document.getElementById('relationshipInput');
+    var newLabel = input.value.trim();
+    var saveBtn = document.getElementById('saveRelationshipBtn');
+    var statusDiv = document.getElementById('relationshipSaveStatus');
+    
+    if (!newLabel) {
+        statusDiv.className = 'small mb-2 text-danger';
+        statusDiv.textContent = 'Please enter a relationship label.';
+        statusDiv.style.display = 'block';
+        return;
+    }
+    
+    // Show loading state
+    saveBtn.disabled = true;
+    saveBtn.querySelector('.btn-text').style.display = 'none';
+    saveBtn.querySelector('.btn-loading').style.display = 'inline';
+    statusDiv.style.display = 'none';
+    
+    // Call API to save the relationship metadata
+    var payload = {
+        endpoint: 'set-metadata',
+        entity_type: 'monitor',
+        entity_id: monitorId,
+        key: 'relationship_' + userId,
+        data: JSON.stringify({ label: newLabel })
+    };
+    
+    fetch('/includes/api-proxy.php?' + new URLSearchParams(payload).toString(), {
+        method: 'POST'
+    })
+    .then(function(response) {
+        return response.json();
+    })
+    .then(function(data) {
+        statusDiv.className = 'small mb-2 text-success';
+        statusDiv.textContent = 'Saved successfully!';
+        statusDiv.style.display = 'block';
+        
+        // Reload after a brief delay to show the new label
+        setTimeout(function() {
+            window.location.reload();
+        }, 800);
+    })
+    .catch(function(error) {
+        console.error('Save failed:', error);
+        statusDiv.className = 'small mb-2 text-danger';
+        statusDiv.textContent = 'Failed to save. Please try again.';
+        statusDiv.style.display = 'block';
+        
+        // Reset button
+        saveBtn.disabled = false;
+        saveBtn.querySelector('.btn-text').style.display = 'inline';
+        saveBtn.querySelector('.btn-loading').style.display = 'none';
+    });
+}
+
+// Initialize modal with current selection highlighted
+document.addEventListener('DOMContentLoaded', function() {
+    var currentLabel = '<?php echo htmlspecialchars($relationshipLabel ?? '', ENT_QUOTES); ?>';
+    if (currentLabel) {
+        document.querySelectorAll('.relationship-quick-btn').forEach(function(btn) {
+            if (btn.textContent.trim() === currentLabel) {
+                btn.classList.add('active');
+            }
+        });
+    }
+});
 </script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

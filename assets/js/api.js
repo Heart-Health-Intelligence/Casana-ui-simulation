@@ -210,33 +210,60 @@ function getInitials(name) {
 
 /**
  * Determine health status based on vitals
+ * Uses centralized thresholds from HEALTH_THRESHOLDS (defined in footer.php)
+ * 
  * @param {object} data - Object with vital signs
  * @returns {string} 'good', 'warning', or 'alert'
  */
 function getHealthStatus(data) {
-    // Check for hypertension
+    // Use centralized thresholds if available, otherwise use defaults
+    var thresholds = window.HEALTH_THRESHOLDS || {
+        bp: {
+            high_stage1: { systolic_min: 130, diastolic_min: 80 },
+            high_stage2: { systolic_min: 140, diastolic_min: 90 },
+            elevated: { systolic_min: 120 }
+        },
+        spo2: { normal_min: 95, mild_low_min: 92 },
+        hr: { normal_min: 60, normal_max: 100, bradycardia_severe: 50, tachycardia_severe: 120 }
+    };
+    
+    var systolic = data.bp_systolic || 0;
+    var diastolic = data.bp_diastolic || 0;
+    var spo2 = data.blood_oxygenation || 100;
+    var hr = data.heart_rate || 75;
+    
+    // Check for explicit HTN flag from API
     if (data.htn === true) {
         return 'alert';
     }
     
-    // Check blood pressure
-    if (data.bp_systolic >= 140 || data.bp_diastolic >= 90) {
+    // Blood pressure checks - High Stage 2 or worse
+    if (systolic >= thresholds.bp.high_stage2.systolic_min || diastolic >= thresholds.bp.high_stage2.diastolic_min) {
         return 'alert';
     }
-    if (data.bp_systolic >= 130 || data.bp_diastolic >= 85) {
+    // High Stage 1
+    if (systolic >= thresholds.bp.high_stage1.systolic_min || diastolic >= thresholds.bp.high_stage1.diastolic_min) {
+        return 'alert';
+    }
+    
+    // SpO2 checks
+    if (spo2 < thresholds.spo2.mild_low_min) {
+        return 'alert';
+    }
+    if (spo2 < thresholds.spo2.normal_min) {
         return 'warning';
     }
     
-    // Check oxygen saturation
-    if (data.blood_oxygenation < 92) {
+    // Heart rate checks
+    if (hr < thresholds.hr.bradycardia_severe || hr > thresholds.hr.tachycardia_severe) {
         return 'alert';
     }
-    if (data.blood_oxygenation < 95) {
+    if (hr < thresholds.hr.normal_min || hr > thresholds.hr.normal_max) {
         return 'warning';
     }
     
-    // Check heart rate (assuming adult)
-    if (data.heart_rate < 50 || data.heart_rate > 100) {
+    // Elevated BP (warning only)
+    if (systolic >= thresholds.bp.elevated.systolic_min && diastolic < thresholds.bp.high_stage1.diastolic_min) {
         return 'warning';
     }
     

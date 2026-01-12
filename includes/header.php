@@ -55,15 +55,36 @@ if (strpos($_SERVER['REQUEST_URI'], '/user/') !== false) {
     <link href="<?php echo $basePath; ?>/assets/css/casana.css" rel="stylesheet">
     <link href="<?php echo $basePath; ?>/assets/css/components.css" rel="stylesheet">
     
-    <!-- Theme initialization (prevents flash) -->
+    <!-- Theme and preferences initialization (prevents flash) -->
     <script>
         (function() {
-            const savedTheme = localStorage.getItem('casana-theme');
-            if (savedTheme) {
-                document.documentElement.setAttribute('data-theme', savedTheme);
+            // Theme initialization
+            var modeKey = 'casana-theme-mode';
+            var themeKey = 'casana-theme';
+            var savedMode = localStorage.getItem(modeKey);
+            var cachedTheme = localStorage.getItem(themeKey);
+            var theme;
+            
+            if (savedMode === 'light') {
+                theme = 'light';
+            } else if (savedMode === 'dark') {
+                theme = 'dark';
             } else {
-                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+                // Auto mode or no preference - use system preference or cache
+                if (cachedTheme) {
+                    theme = cachedTheme;
+                } else {
+                    theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                }
+            }
+            
+            document.documentElement.setAttribute('data-theme', theme);
+            
+            // Large text preference
+            var largeText = localStorage.getItem('casana-large-text') === 'true';
+            if (largeText) {
+                document.documentElement.style.fontSize = '18px';
+                document.documentElement.classList.add('large-text-enabled');
             }
         })();
     </script>

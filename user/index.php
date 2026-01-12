@@ -261,7 +261,7 @@ if ($latestRecording) {
                         <i class="bi bi-speedometer2"></i>
                     </div>
                     <div class="text-secondary small text-uppercase mb-1 fw-medium">Weight</div>
-                    <div class="stat-value"><?php echo round($latestRecording['seated_weight'] * 1.67, 1); ?><span class="stat-unit">kg</span></div>
+                    <div class="stat-value"><?php echo round($latestRecording['seated_weight'], 1); ?><span class="stat-unit">kg</span></div>
                     <div class="stat-status normal">Tracked</div>
                 </div>
             </div>
@@ -671,16 +671,23 @@ if ($latestRecording) {
 </nav>
 
 <script>
-const trendsData = <?php echo json_encode($trends ?? []); ?>;
+var trendsData = <?php echo json_encode($trends ?? []); ?>;
+
+// Chart instance references for proper cleanup
+var chartInstances = {
+    bp: null,
+    hr: null,
+    spo2: null
+};
 
 // Alert banner functions
 function dismissAlert() {
-    const banner = document.getElementById('healthAlertBanner');
+    var banner = document.getElementById('healthAlertBanner');
     if (banner) {
         banner.classList.add('dismissed');
         // Store dismissal in session storage (resets on next visit)
         sessionStorage.setItem('alertDismissed-<?php echo $userId; ?>', Date.now());
-        setTimeout(() => banner.remove(), 300);
+        setTimeout(function() { banner.remove(); }, 300);
     }
 }
 
@@ -691,9 +698,9 @@ function contactProvider() {
 
 // Check if alert was dismissed in this session
 document.addEventListener('DOMContentLoaded', function() {
-    const dismissed = sessionStorage.getItem('alertDismissed-<?php echo $userId; ?>');
+    var dismissed = sessionStorage.getItem('alertDismissed-<?php echo $userId; ?>');
     if (dismissed) {
-        const banner = document.getElementById('healthAlertBanner');
+        var banner = document.getElementById('healthAlertBanner');
         if (banner) {
             banner.style.display = 'none';
         }
@@ -702,14 +709,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
 document.addEventListener('DOMContentLoaded', function() {
     // View mode toggle
-    const simpleMode = document.getElementById('simpleMode');
-    const detailedMode = document.getElementById('detailedMode');
+    var simpleMode = document.getElementById('simpleMode');
+    var detailedMode = document.getElementById('detailedMode');
     
     if (simpleMode && detailedMode) {
+        // Apply saved default view preference
+        var defaultView = CasanaPreferences.getDefaultView();
+        if (defaultView === 'detailed') {
+            detailedMode.checked = true;
+            document.getElementById('simpleView').style.display = 'none';
+            document.getElementById('detailedView').style.display = 'block';
+            setTimeout(initDetailedCharts, 50);
+        } else {
+            simpleMode.checked = true;
+        }
+        
         simpleMode.addEventListener('change', function() {
             if (this.checked) {
                 document.getElementById('simpleView').style.display = 'block';
                 document.getElementById('detailedView').style.display = 'none';
+                // Save preference
+                CasanaPreferences.setDefaultView('simple');
             }
         });
         
@@ -719,33 +739,41 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('detailedView').style.display = 'block';
                 // Small delay to ensure display:block has rendered before chart init
                 setTimeout(initDetailedCharts, 50);
+                // Save preference
+                CasanaPreferences.setDefaultView('detailed');
             }
         });
 
-        // Re-init charts on theme change
-        const observer = new MutationObserver(function(mutations) {
-            mutations.forEach(function(mutation) {
-                if (mutation.type === "attributes" && mutation.attributeName === "data-theme") {
-                    chartsInitialized = false; // Force re-init
-                    if (detailedMode.checked) {
-                         // Clear existing charts if possible or just re-init which might need chart destruction
-                         // For simplicity, we'll just reload the page or re-draw.
-                         // Better: destroy old charts. But we didn't save references.
-                         // Let's just reload for now as theme switch is rare, OR just re-call init
-                         // Ideally we should destroy charts.
-                         location.reload(); 
-                    }
-                }
-            });
-        });
-        
-        observer.observe(document.documentElement, {
-            attributes: true //configure it to listen to attribute changes
+        // Listen for theme changes and re-init charts without page reload
+        window.addEventListener('themechange', function() {
+            if (detailedMode.checked) {
+                // Destroy existing charts
+                destroyCharts();
+                // Re-initialize with new theme colors
+                setTimeout(initDetailedCharts, 100);
+            }
         });
     }
 });
 
-let chartsInitialized = false;
+// Destroy chart instances
+function destroyCharts() {
+    if (chartInstances.bp) {
+        chartInstances.bp.destroy();
+        chartInstances.bp = null;
+    }
+    if (chartInstances.hr) {
+        chartInstances.hr.destroy();
+        chartInstances.hr = null;
+    }
+    if (chartInstances.spo2) {
+        chartInstances.spo2.destroy();
+        chartInstances.spo2 = null;
+    }
+    chartsInitialized = false;
+}
+
+var chartsInitialized = false;
 
 function initDetailedCharts() {
     if (chartsInitialized || !trendsData || trendsData.length === 0) return;
@@ -757,20 +785,22 @@ function initDetailedCharts() {
         return;
     }
     
-    const colors = CasanaCharts.getColors();
-    const labels = trendsData.map(t => new Date(t.date).toLocaleDateString('en-US', { weekday: 'short' }));
+    var colors = CasanaCharts.getColors();
+    var labels = trendsData.map(function(t) { 
+        return new Date(t.date).toLocaleDateString('en-US', { weekday: 'short' }); 
+    });
     
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    const gridColor = isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)';
-    const textColor = isDark ? '#94a3b8' : '#64748b';
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    var gridColor = isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)';
+    var textColor = isDark ? '#94a3b8' : '#64748b';
 
     // Common Chart Options for polished look
-    const commonOptions = {
+    var commonOptions = {
         responsive: true,
         maintainAspectRatio: false,
         animation: {
             duration: 800,
-            easing: 'easeOutQuart',
+            easing: 'easeOutQuart'
         },
         plugins: {
             legend: { display: false },
@@ -787,7 +817,7 @@ function initDetailedCharts() {
                 displayColors: true,
                 boxPadding: 6,
                 usePointStyle: true,
-                caretSize: 6,
+                caretSize: 6
             }
         },
         scales: {
@@ -796,21 +826,21 @@ function initDetailedCharts() {
                 ticks: { 
                     font: { family: 'Plus Jakarta Sans', size: 11, weight: 500 }, 
                     color: textColor,
-                    padding: 8,
+                    padding: 8
                 }
             },
             y: {
                 grid: { 
                     color: gridColor, 
                     drawBorder: false,
-                    lineWidth: 1,
+                    lineWidth: 1
                 },
                 ticks: { 
                     font: { family: 'Plus Jakarta Sans', size: 11 }, 
                     color: textColor,
-                    padding: 10,
+                    padding: 10
                 },
-                beginAtZero: false,
+                beginAtZero: false
             }
         },
         elements: {
@@ -819,189 +849,194 @@ function initDetailedCharts() {
                 hoverRadius: 6, 
                 hitRadius: 30,
                 hoverBorderWidth: 2,
-                hoverBackgroundColor: isDark ? '#0f172a' : '#ffffff',
+                hoverBackgroundColor: isDark ? '#0f172a' : '#ffffff'
             },
             line: { 
                 tension: 0.35, 
                 borderWidth: 2.5,
                 borderCapStyle: 'round',
-                borderJoinStyle: 'round',
+                borderJoinStyle: 'round'
             }
         },
         interaction: {
             mode: 'index',
-            intersect: false,
+            intersect: false
         }
     };
     
     // BP Chart with gradient fills and reference lines
-    const bpCtx = document.getElementById('bpChart');
+    var bpCtx = document.getElementById('bpChart');
     if (bpCtx) {
-        const ctx = bpCtx.getContext('2d');
+        var ctx = bpCtx.getContext('2d');
         
         // Create gradients
-        const systolicGradient = ctx.createLinearGradient(0, 0, 0, 300);
+        var systolicGradient = ctx.createLinearGradient(0, 0, 0, 300);
         systolicGradient.addColorStop(0, 'rgba(239, 68, 68, 0.15)');
         systolicGradient.addColorStop(1, 'rgba(239, 68, 68, 0)');
         
-        const diastolicGradient = ctx.createLinearGradient(0, 0, 0, 300);
+        var diastolicGradient = ctx.createLinearGradient(0, 0, 0, 300);
         diastolicGradient.addColorStop(0, 'rgba(91, 95, 239, 0.15)');
         diastolicGradient.addColorStop(1, 'rgba(91, 95, 239, 0)');
         
-        new Chart(bpCtx, {
+        chartInstances.bp = new Chart(bpCtx, {
             type: 'line',
             data: {
                 labels: labels,
                 datasets: [
                     {
                         label: 'Systolic',
-                        data: trendsData.map(t => t.avg_bp_systolic),
+                        data: trendsData.map(function(t) { return t.avg_bp_systolic; }),
                         borderColor: '#ef4444',
                         backgroundColor: systolicGradient,
                         fill: true,
-                        pointBackgroundColor: '#ef4444',
+                        pointBackgroundColor: '#ef4444'
                     },
                     {
                         label: 'Diastolic',
-                        data: trendsData.map(t => t.avg_bp_diastolic),
+                        data: trendsData.map(function(t) { return t.avg_bp_diastolic; }),
                         borderColor: '#5b5fef',
                         backgroundColor: diastolicGradient,
                         fill: true,
-                        pointBackgroundColor: '#5b5fef',
+                        pointBackgroundColor: '#5b5fef'
                     }
                 ]
             },
             options: {
-                ...commonOptions,
+                responsive: commonOptions.responsive,
+                maintainAspectRatio: commonOptions.maintainAspectRatio,
+                animation: commonOptions.animation,
                 plugins: {
-                    ...commonOptions.plugins,
+                    legend: commonOptions.plugins.legend,
                     tooltip: {
-                        ...commonOptions.plugins.tooltip,
+                        backgroundColor: commonOptions.plugins.tooltip.backgroundColor,
+                        titleColor: commonOptions.plugins.tooltip.titleColor,
+                        bodyColor: commonOptions.plugins.tooltip.bodyColor,
+                        borderColor: commonOptions.plugins.tooltip.borderColor,
+                        borderWidth: commonOptions.plugins.tooltip.borderWidth,
+                        padding: commonOptions.plugins.tooltip.padding,
+                        cornerRadius: commonOptions.plugins.tooltip.cornerRadius,
                         callbacks: {
                             label: function(context) {
                                 return context.dataset.label + ': ' + Math.round(context.raw) + ' mmHg';
                             }
                         }
-                    },
-                    annotation: {
-                        annotations: {
-                            normalSystolic: {
-                                type: 'line',
-                                yMin: 120,
-                                yMax: 120,
-                                borderColor: 'rgba(16, 185, 129, 0.4)',
-                                borderWidth: 1,
-                                borderDash: [6, 4],
-                            },
-                            normalDiastolic: {
-                                type: 'line',
-                                yMin: 80,
-                                yMax: 80,
-                                borderColor: 'rgba(16, 185, 129, 0.4)',
-                                borderWidth: 1,
-                                borderDash: [6, 4],
-                            }
-                        }
                     }
                 },
                 scales: {
-                    ...commonOptions.scales,
+                    x: commonOptions.scales.x,
                     y: {
-                        ...commonOptions.scales.y,
+                        grid: commonOptions.scales.y.grid,
+                        ticks: commonOptions.scales.y.ticks,
+                        beginAtZero: false,
                         min: 60,
-                        max: 180,
+                        max: 180
                     }
-                }
+                },
+                elements: commonOptions.elements,
+                interaction: commonOptions.interaction
             }
         });
     }
     
     // HR Chart with gradient fill
-    const hrCtx = document.getElementById('hrChart');
+    var hrCtx = document.getElementById('hrChart');
     if (hrCtx) {
-        const ctx = hrCtx.getContext('2d');
-        const hrGradient = ctx.createLinearGradient(0, 0, 0, 200);
+        var hrGradient = hrCtx.getContext('2d').createLinearGradient(0, 0, 0, 200);
         hrGradient.addColorStop(0, 'rgba(239, 68, 68, 0.2)');
         hrGradient.addColorStop(1, 'rgba(239, 68, 68, 0)');
         
-        new Chart(hrCtx, {
+        chartInstances.hr = new Chart(hrCtx, {
             type: 'line',
             data: {
                 labels: labels,
                 datasets: [{
                     label: 'Heart Rate',
-                    data: trendsData.map(t => t.avg_heart_rate),
+                    data: trendsData.map(function(t) { return t.avg_heart_rate; }),
                     borderColor: '#ef4444',
                     backgroundColor: hrGradient,
                     fill: true,
-                    pointBackgroundColor: '#ef4444',
+                    pointBackgroundColor: '#ef4444'
                 }]
             },
             options: {
-                ...commonOptions,
+                responsive: commonOptions.responsive,
+                maintainAspectRatio: commonOptions.maintainAspectRatio,
+                animation: commonOptions.animation,
                 plugins: {
-                    ...commonOptions.plugins,
+                    legend: commonOptions.plugins.legend,
                     tooltip: {
-                        ...commonOptions.plugins.tooltip,
+                        backgroundColor: commonOptions.plugins.tooltip.backgroundColor,
+                        titleColor: commonOptions.plugins.tooltip.titleColor,
+                        bodyColor: commonOptions.plugins.tooltip.bodyColor,
                         callbacks: {
                             label: function(context) {
                                 return Math.round(context.raw) + ' BPM';
                             }
                         }
                     }
-                }
+                },
+                scales: commonOptions.scales,
+                elements: commonOptions.elements,
+                interaction: commonOptions.interaction
             }
         });
     }
     
     // SpO2 Chart with gradient fill
-    const spo2Ctx = document.getElementById('spo2Chart');
+    var spo2Ctx = document.getElementById('spo2Chart');
     if (spo2Ctx) {
-        const ctx = spo2Ctx.getContext('2d');
-        const spo2Gradient = ctx.createLinearGradient(0, 0, 0, 200);
+        var spo2Gradient = spo2Ctx.getContext('2d').createLinearGradient(0, 0, 0, 200);
         spo2Gradient.addColorStop(0, 'rgba(56, 189, 248, 0.2)');
         spo2Gradient.addColorStop(1, 'rgba(56, 189, 248, 0)');
         
-        new Chart(spo2Ctx, {
+        chartInstances.spo2 = new Chart(spo2Ctx, {
             type: 'line',
             data: {
                 labels: labels,
                 datasets: [{
                     label: 'SpO₂',
-                    data: trendsData.map(t => t.avg_blood_oxygenation),
+                    data: trendsData.map(function(t) { return t.avg_blood_oxygenation; }),
                     borderColor: '#38bdf8',
                     backgroundColor: spo2Gradient,
                     fill: true,
-                    pointBackgroundColor: '#38bdf8',
+                    pointBackgroundColor: '#38bdf8'
                 }]
             },
             options: {
-                ...commonOptions,
-                scales: {
-                    ...commonOptions.scales,
-                    y: { 
-                        ...commonOptions.scales.y, 
-                        min: 90, 
-                        max: 100,
-                        ticks: {
-                            ...commonOptions.scales.y.ticks,
-                            callback: function(value) {
-                                return value + '%';
-                            }
-                        }
-                    }
-                },
+                responsive: commonOptions.responsive,
+                maintainAspectRatio: commonOptions.maintainAspectRatio,
+                animation: commonOptions.animation,
                 plugins: {
-                    ...commonOptions.plugins,
+                    legend: commonOptions.plugins.legend,
                     tooltip: {
-                        ...commonOptions.plugins.tooltip,
+                        backgroundColor: commonOptions.plugins.tooltip.backgroundColor,
+                        titleColor: commonOptions.plugins.tooltip.titleColor,
+                        bodyColor: commonOptions.plugins.tooltip.bodyColor,
                         callbacks: {
                             label: function(context) {
                                 return context.raw.toFixed(1) + '%';
                             }
                         }
                     }
-                }
+                },
+                scales: {
+                    x: commonOptions.scales.x,
+                    y: {
+                        grid: commonOptions.scales.y.grid,
+                        ticks: {
+                            font: commonOptions.scales.y.ticks.font,
+                            color: commonOptions.scales.y.ticks.color,
+                            padding: commonOptions.scales.y.ticks.padding,
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        },
+                        min: 90,
+                        max: 100
+                    }
+                },
+                elements: commonOptions.elements,
+                interaction: commonOptions.interaction
             }
         });
     }

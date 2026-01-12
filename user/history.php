@@ -12,9 +12,30 @@ $userId = isset($_GET['id']) ? intval($_GET['id']) : 1;
 // Pagination
 $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
 
+// Get filter parameters
+$startDate = isset($_GET['start_date']) ? $_GET['start_date'] : null;
+$endDate = isset($_GET['end_date']) ? $_GET['end_date'] : null;
+$filter = isset($_GET['filter']) ? $_GET['filter'] : null;
+
+// Build API parameters
+$apiParams = ['per_page' => 20, 'page' => $page];
+
+// Add date filters if provided
+if ($startDate) {
+    $apiParams['start_date'] = $startDate;
+}
+if ($endDate) {
+    $apiParams['end_date'] = $endDate;
+}
+
+// Add HTN-only filter for "elevated" - the API supports htn_only parameter
+if ($filter === 'elevated') {
+    $apiParams['htn_only'] = true;
+}
+
 // Fetch user and recordings
 $user = $api->getUser($userId);
-$recordings = $api->getUserRecordings($userId, ['per_page' => 20, 'page' => $page]);
+$recordings = $api->getUserRecordings($userId, $apiParams);
 
 // Page setup
 $pageTitle = 'History';
@@ -43,19 +64,19 @@ require_once __DIR__ . '/../includes/header.php';
     <div class="quick-filters mb-4">
         <div class="d-flex flex-wrap gap-2 align-items-center">
             <span class="text-muted small me-2">Quick filters:</span>
-            <button class="filter-chip active" onclick="setQuickFilter('all')">
+            <button class="filter-chip active" onclick="setQuickFilter('all', event)">
                 <i class="bi bi-list-ul"></i> All
             </button>
-            <button class="filter-chip" onclick="setQuickFilter('today')">
+            <button class="filter-chip" onclick="setQuickFilter('today', event)">
                 <i class="bi bi-calendar-day"></i> Today
             </button>
-            <button class="filter-chip" onclick="setQuickFilter('week')">
+            <button class="filter-chip" onclick="setQuickFilter('week', event)">
                 <i class="bi bi-calendar-week"></i> This Week
             </button>
-            <button class="filter-chip" onclick="setQuickFilter('month')">
+            <button class="filter-chip" onclick="setQuickFilter('month', event)">
                 <i class="bi bi-calendar-month"></i> This Month
             </button>
-            <button class="filter-chip warning" onclick="setQuickFilter('elevated')">
+            <button class="filter-chip warning" onclick="setQuickFilter('elevated', event)">
                 <i class="bi bi-exclamation-triangle"></i> Elevated BP
             </button>
         </div>
@@ -171,7 +192,7 @@ require_once __DIR__ . '/../includes/header.php';
                             <td><?php echo round($rec['agility_score']); ?></td>
                             <td class="text-nowrap"><?php echo formatDuration($rec['duration_seconds']); ?></td>
                             <td>
-                                <button class="btn btn-sm btn-outline-primary">
+                                <button class="btn btn-sm btn-outline-primary" onclick="openRecordingDetail(<?php echo $rec['id']; ?>, event)" title="View ECG &amp; Details">
                                     <i class="bi bi-activity"></i>
                                 </button>
                             </td>
@@ -257,80 +278,101 @@ require_once __DIR__ . '/../includes/header.php';
 </nav>
 
 <script>
-const userId = <?php echo $userId; ?>;
+var userId = <?php echo $userId; ?>;
 
 function applyDateFilter() {
-    const startDate = document.getElementById('startDate').value;
-    const endDate = document.getElementById('endDate').value;
+    var startDate = document.getElementById('startDate').value;
+    var endDate = document.getElementById('endDate').value;
     
-    let url = `history.php?id=${userId}`;
-    if (startDate) url += `&start_date=${startDate}`;
-    if (endDate) url += `&end_date=${endDate}`;
+    var url = 'history.php?id=' + userId;
+    if (startDate) url += '&start_date=' + startDate;
+    if (endDate) url += '&end_date=' + endDate;
     
     window.location.href = url;
 }
 
-function setQuickFilter(filter) {
-    // Update active state visually
-    document.querySelectorAll('.filter-chip').forEach(chip => {
-        chip.classList.remove('active');
-    });
-    event.target.closest('.filter-chip').classList.add('active');
-    
-    const today = new Date();
-    let startDate = '';
-    let endDate = today.toISOString().split('T')[0];
-    let filterType = '';
-    
-    switch(filter) {
-        case 'today':
-            startDate = endDate;
-            break;
-        case 'week':
-            const weekAgo = new Date(today);
-            weekAgo.setDate(weekAgo.getDate() - 7);
-            startDate = weekAgo.toISOString().split('T')[0];
-            break;
-        case 'month':
-            const monthAgo = new Date(today);
-            monthAgo.setMonth(monthAgo.getMonth() - 1);
-            startDate = monthAgo.toISOString().split('T')[0];
-            break;
-        case 'elevated':
-            filterType = 'elevated';
-            break;
-        case 'all':
-        default:
-            // No date filter for "all"
-            window.location.href = `history.php?id=${userId}`;
-            return;
+function setQuickFilter(filter, evt) {
+    // Prevent double-firing from event bubbling
+    if (evt) {
+        evt.preventDefault();
     }
     
-    let url = `history.php?id=${userId}`;
-    if (startDate) url += `&start_date=${startDate}`;
-    if (endDate) url += `&end_date=${endDate}`;
-    if (filterType) url += `&filter=${filterType}`;
+    // Update active state visually
+    document.querySelectorAll('.filter-chip').forEach(function(chip) {
+        chip.classList.remove('active');
+    });
+    
+    // Find the clicked chip and mark it active
+    var targetChip = evt ? evt.currentTarget : document.querySelector('.filter-chip');
+    if (targetChip) {
+        targetChip.classList.add('active');
+    }
+    
+    var today = new Date();
+    var startDate = '';
+    var endDate = today.toISOString().split('T')[0];
+    var filterType = '';
+    
+    if (filter === 'today') {
+        startDate = endDate;
+    } else if (filter === 'week') {
+        var weekAgo = new Date(today);
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        startDate = weekAgo.toISOString().split('T')[0];
+    } else if (filter === 'month') {
+        var monthAgo = new Date(today);
+        monthAgo.setMonth(monthAgo.getMonth() - 1);
+        startDate = monthAgo.toISOString().split('T')[0];
+    } else if (filter === 'elevated') {
+        filterType = 'elevated';
+    } else {
+        // "all" - no date filter
+        window.location.href = 'history.php?id=' + userId;
+        return;
+    }
+    
+    var url = 'history.php?id=' + userId;
+    if (startDate) url += '&start_date=' + startDate;
+    if (endDate) url += '&end_date=' + endDate;
+    if (filterType) url += '&filter=' + filterType;
     
     window.location.href = url;
+}
+
+// Open recording detail (for ECG button in table)
+function openRecordingDetail(recId, evt) {
+    evt.stopPropagation(); // Prevent row click
+    window.location.href = 'recording.php?id=' + recId + '&user=' + userId;
 }
 
 // Highlight current filter based on URL params
 document.addEventListener('DOMContentLoaded', function() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const startDate = urlParams.get('start_date');
-    const filter = urlParams.get('filter');
+    var urlParams = new URLSearchParams(window.location.search);
+    var startDate = urlParams.get('start_date');
+    var endDateParam = urlParams.get('end_date');
+    var filter = urlParams.get('filter');
     
     if (startDate) {
         document.getElementById('startDate').value = startDate;
     }
-    if (urlParams.get('end_date')) {
-        document.getElementById('endDate').value = urlParams.get('end_date');
+    if (endDateParam) {
+        document.getElementById('endDate').value = endDateParam;
     }
     
     // Update filter chip active state based on current filter
     if (filter === 'elevated') {
-        document.querySelectorAll('.filter-chip').forEach(chip => chip.classList.remove('active'));
-        document.querySelector('.filter-chip.warning').classList.add('active');
+        document.querySelectorAll('.filter-chip').forEach(function(chip) { 
+            chip.classList.remove('active'); 
+        });
+        var warningChip = document.querySelector('.filter-chip.warning');
+        if (warningChip) {
+            warningChip.classList.add('active');
+        }
+    } else if (startDate) {
+        // If there's a start date, deactivate "All" chip
+        document.querySelectorAll('.filter-chip').forEach(function(chip) { 
+            chip.classList.remove('active'); 
+        });
     }
 });
 </script>

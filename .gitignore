@@ -27,11 +27,15 @@ composer.lock
 /cache/
 /tmp/
 
-# Environment and config files (if added later)
+# Environment and config files
 .env
 .env.local
 .env.*.local
 config.local.php
+/config/config.php
+
+# Application data (notes, followups, etc.)
+/data/
 
 # Uploaded files (if applicable)
 /uploads/

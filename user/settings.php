@@ -251,9 +251,14 @@ require_once __DIR__ . '/../includes/header.php';
                 <div class="settings-label">Export My Data</div>
                 <div class="settings-description">Download all your health records</div>
             </div>
-            <button class="btn btn-outline-primary btn-sm">
-                <i class="bi bi-download me-1"></i> Export
-            </button>
+            <div class="btn-group" role="group">
+                <button class="btn btn-outline-primary btn-sm" onclick="exportData('csv')">
+                    <i class="bi bi-file-earmark-spreadsheet me-1"></i> CSV
+                </button>
+                <button class="btn btn-outline-primary btn-sm" onclick="exportData('json')">
+                    <i class="bi bi-file-earmark-code me-1"></i> JSON
+                </button>
+            </div>
         </div>
     </div>
     
@@ -293,9 +298,59 @@ require_once __DIR__ . '/../includes/header.php';
                 <a href="https://casana.mcchord.net/docs" target="_blank" class="btn btn-outline-primary">
                     <i class="bi bi-book me-1"></i> Documentation
                 </a>
-                <button class="btn btn-primary">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#supportModal">
                     <i class="bi bi-chat-dots me-1"></i> Contact Support
                 </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Support Modal -->
+    <div class="modal fade" id="supportModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-headset me-2"></i>Contact Support</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-4">Choose how you'd like to reach us:</p>
+                    
+                    <div class="d-grid gap-3">
+                        <a href="mailto:support@casana.com?subject=Heart%20Seat%20Support%20Request%20-%20User%20<?php echo $userId; ?>" class="btn btn-outline-primary btn-lg text-start">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-envelope fs-4 me-3"></i>
+                                <div>
+                                    <strong>Email Support</strong>
+                                    <div class="small text-muted">support@casana.com</div>
+                                </div>
+                            </div>
+                        </a>
+                        
+                        <a href="tel:+18005551234" class="btn btn-outline-primary btn-lg text-start">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-telephone fs-4 me-3"></i>
+                                <div>
+                                    <strong>Call Us</strong>
+                                    <div class="small text-muted">1-800-555-1234 (Mon-Fri, 9am-5pm ET)</div>
+                                </div>
+                            </div>
+                        </a>
+                        
+                        <a href="https://casana.mcchord.net/docs/faq" target="_blank" class="btn btn-outline-secondary btn-lg text-start">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-question-circle fs-4 me-3"></i>
+                                <div>
+                                    <strong>FAQs</strong>
+                                    <div class="small text-muted">Find answers to common questions</div>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
             </div>
         </div>
     </div>
@@ -332,13 +387,15 @@ require_once __DIR__ . '/../includes/header.php';
 </nav>
 
 <script>
+var userId = <?php echo $userId; ?>;
+
 document.addEventListener('DOMContentLoaded', function() {
-    // Theme selection
-    const currentTheme = localStorage.getItem('casana-theme') || 'auto';
+    // Theme selection - use the new mode-based system
+    var currentMode = ThemeManager.getMode();
     
-    if (currentTheme === 'light') {
+    if (currentMode === 'light') {
         document.getElementById('themeLight').checked = true;
-    } else if (currentTheme === 'dark') {
+    } else if (currentMode === 'dark') {
         document.getElementById('themeDark').checked = true;
     } else {
         document.getElementById('themeAuto').checked = true;
@@ -346,46 +403,151 @@ document.addEventListener('DOMContentLoaded', function() {
     
     document.getElementById('themeLight').addEventListener('change', function() {
         if (this.checked) {
-            ThemeManager.setTheme('light');
-            localStorage.setItem('casana-theme', 'light');
+            ThemeManager.setMode('light');
         }
     });
     
     document.getElementById('themeDark').addEventListener('change', function() {
         if (this.checked) {
-            ThemeManager.setTheme('dark');
-            localStorage.setItem('casana-theme', 'dark');
+            ThemeManager.setMode('dark');
         }
     });
     
     document.getElementById('themeAuto').addEventListener('change', function() {
         if (this.checked) {
-            localStorage.removeItem('casana-theme');
-            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            ThemeManager.setTheme(prefersDark ? 'dark' : 'light');
+            ThemeManager.setMode('auto');
         }
     });
     
-    // Load saved preferences
-    const savedView = localStorage.getItem('casana-default-view') || 'simple';
+    // Load saved preferences using CasanaPreferences manager
+    var savedView = CasanaPreferences.getDefaultView();
     document.getElementById('defaultView').value = savedView;
     
-    const largeText = localStorage.getItem('casana-large-text') === 'true';
+    var largeText = CasanaPreferences.isLargeTextEnabled();
     document.getElementById('largeText').checked = largeText;
-    if (largeText) {
-        document.documentElement.style.fontSize = '18px';
-    }
     
-    // Save preference changes
+    // Save preference changes using CasanaPreferences manager
     document.getElementById('defaultView').addEventListener('change', function() {
-        localStorage.setItem('casana-default-view', this.value);
+        CasanaPreferences.setDefaultView(this.value);
     });
     
     document.getElementById('largeText').addEventListener('change', function() {
-        localStorage.setItem('casana-large-text', this.checked);
-        document.documentElement.style.fontSize = this.checked ? '18px' : '16px';
+        CasanaPreferences.setLargeText(this.checked);
     });
 });
+
+// Export data function
+function exportData(format) {
+    // Show loading state
+    var buttons = document.querySelectorAll('[onclick^="exportData"]');
+    buttons.forEach(function(btn) {
+        btn.disabled = true;
+    });
+    
+    // Fetch all recordings via API proxy
+    CasanaAPI.getUserRecordings(userId, { per_page: 1000 })
+        .then(function(data) {
+            if (!data || !data.recordings || data.recordings.length === 0) {
+                alert('No recordings found to export.');
+                return;
+            }
+            
+            var recordings = data.recordings;
+            var filename = 'casana-health-data-' + new Date().toISOString().split('T')[0];
+            
+            if (format === 'csv') {
+                exportCSV(recordings, filename);
+            } else {
+                exportJSON(recordings, filename);
+            }
+        })
+        .catch(function(error) {
+            console.error('Export failed:', error);
+            alert('Failed to export data. Please try again.');
+        })
+        .finally(function() {
+            buttons.forEach(function(btn) {
+                btn.disabled = false;
+            });
+        });
+}
+
+function exportCSV(recordings, filename) {
+    // Define CSV headers
+    var headers = [
+        'Date/Time',
+        'Systolic BP (mmHg)',
+        'Diastolic BP (mmHg)',
+        'Heart Rate (BPM)',
+        'SpO2 (%)',
+        'HRV (ms)',
+        'Agility Score',
+        'Weight (kg)',
+        'Duration (seconds)',
+        'Hypertensive'
+    ];
+    
+    // Build CSV content
+    var csvContent = headers.join(',') + '\n';
+    
+    recordings.forEach(function(rec) {
+        var row = [
+            rec.sit_time,
+            rec.bp_systolic,
+            rec.bp_diastolic,
+            rec.heart_rate,
+            rec.blood_oxygenation ? rec.blood_oxygenation.toFixed(1) : '',
+            rec.hrv ? rec.hrv.toFixed(1) : '',
+            rec.agility_score ? Math.round(rec.agility_score) : '',
+            rec.seated_weight ? rec.seated_weight.toFixed(1) : '',
+            rec.duration_seconds,
+            rec.htn ? 'Yes' : 'No'
+        ];
+        csvContent += row.join(',') + '\n';
+    });
+    
+    downloadFile(csvContent, filename + '.csv', 'text/csv');
+}
+
+function exportJSON(recordings, filename) {
+    var exportData = {
+        exported_at: new Date().toISOString(),
+        user_id: userId,
+        total_recordings: recordings.length,
+        recordings: recordings.map(function(rec) {
+            return {
+                timestamp: rec.sit_time,
+                blood_pressure: {
+                    systolic: rec.bp_systolic,
+                    diastolic: rec.bp_diastolic,
+                    hypertensive: rec.htn
+                },
+                heart_rate: rec.heart_rate,
+                blood_oxygenation: rec.blood_oxygenation,
+                hrv: rec.hrv,
+                agility_score: rec.agility_score,
+                weight_kg: rec.seated_weight,
+                duration_seconds: rec.duration_seconds
+            };
+        })
+    };
+    
+    downloadFile(JSON.stringify(exportData, null, 2), filename + '.json', 'application/json');
+}
+
+function downloadFile(content, filename, mimeType) {
+    var blob = new Blob([content], { type: mimeType });
+    var url = URL.createObjectURL(blob);
+    
+    var link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    URL.revokeObjectURL(url);
+}
 </script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

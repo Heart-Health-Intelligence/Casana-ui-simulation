@@ -4,10 +4,15 @@
  * Centralized definition of alert types, severity, labels, and styling
  * 
  * Use this across Dashboard, Alerts, and Patient views to ensure consistency
+ * Thresholds are pulled from health-thresholds.php for consistency
  */
+
+// Include centralized health thresholds
+require_once __DIR__ . '/health-thresholds.php';
 
 // Alert type definitions
 // Each alert type has: id, label, short_label, severity (1-4), icon, color_class
+// Thresholds are dynamically built from health-thresholds.php constants
 $ALERT_TAXONOMY = [
     'hypertension' => [
         'id' => 'hypertension',
@@ -19,19 +24,19 @@ $ALERT_TAXONOMY = [
         'color' => 'danger',
         'color_class' => 'bg-danger-soft',
         'text_class' => 'text-danger',
-        'threshold' => 'Systolic ≥140 or Diastolic ≥90 mmHg'
+        'threshold' => 'Systolic ≥' . BP_HIGH_STAGE2_SYSTOLIC_MIN . ' or Diastolic ≥' . BP_HIGH_STAGE2_DIASTOLIC_MIN . ' mmHg'
     ],
     'low_spo2' => [
         'id' => 'low_spo2',
         'label' => 'Low Oxygen',
         'short_label' => 'Low O₂',
         'description' => 'Blood oxygen saturation below normal',
-        'severity' => 4, // Critical
+        'severity' => 3, // High (changed from 4 - only critical below 90)
         'icon' => 'bi-lungs',
         'color' => 'warning',
         'color_class' => 'bg-warning-soft',
         'text_class' => 'text-warning',
-        'threshold' => 'SpO₂ <94%'
+        'threshold' => 'SpO₂ <' . SPO2_NORMAL_MIN . '%'
     ],
     'extended_sit' => [
         'id' => 'extended_sit',
@@ -43,7 +48,7 @@ $ALERT_TAXONOMY = [
         'color' => 'info',
         'color_class' => 'bg-info-soft',
         'text_class' => 'text-info',
-        'threshold' => 'Duration >10 minutes'
+        'threshold' => 'Duration >' . (SIT_EXTENDED_MIN / 60) . ' minutes'
     ],
     'bradycardia' => [
         'id' => 'bradycardia',
@@ -55,7 +60,7 @@ $ALERT_TAXONOMY = [
         'color' => 'warning',
         'color_class' => 'bg-warning-soft',
         'text_class' => 'text-warning',
-        'threshold' => 'HR <50 bpm'
+        'threshold' => 'HR <' . HR_BRADYCARDIA_SEVERE . ' bpm'
     ],
     'tachycardia' => [
         'id' => 'tachycardia',
@@ -67,7 +72,7 @@ $ALERT_TAXONOMY = [
         'color' => 'warning',
         'color_class' => 'bg-warning-soft',
         'text_class' => 'text-warning',
-        'threshold' => 'HR >100 bpm'
+        'threshold' => 'HR >' . HR_NORMAL_MAX . ' bpm'
     ],
     'afib_suspected' => [
         'id' => 'afib_suspected',
@@ -91,7 +96,7 @@ $ALERT_TAXONOMY = [
         'color' => 'warning',
         'color_class' => 'bg-warning-soft',
         'text_class' => 'text-warning',
-        'threshold' => 'Duration >20 minutes'
+        'threshold' => 'Duration >' . (SIT_VERY_EXTENDED_MIN / 60) . ' minutes'
     ],
     'critical_spo2' => [
         'id' => 'critical_spo2',
@@ -103,7 +108,7 @@ $ALERT_TAXONOMY = [
         'color' => 'danger',
         'color_class' => 'bg-danger-soft',
         'text_class' => 'text-danger',
-        'threshold' => 'SpO₂ <90%'
+        'threshold' => 'SpO₂ <' . (SPO2_SEVERE_CRITICAL_MAX + 1) . '%'
     ],
     'severe_hypertension' => [
         'id' => 'severe_hypertension',
@@ -115,7 +120,7 @@ $ALERT_TAXONOMY = [
         'color' => 'danger',
         'color_class' => 'bg-danger-soft',
         'text_class' => 'text-danger',
-        'threshold' => 'Systolic ≥180 or Diastolic ≥120 mmHg'
+        'threshold' => 'Systolic ≥' . BP_CRISIS_SYSTOLIC_MIN . ' or Diastolic ≥' . BP_CRISIS_DIASTOLIC_MIN . ' mmHg'
     ],
     'low_heart_rate' => [
         'id' => 'low_heart_rate',
@@ -127,7 +132,7 @@ $ALERT_TAXONOMY = [
         'color' => 'warning',
         'color_class' => 'bg-warning-soft',
         'text_class' => 'text-warning',
-        'threshold' => 'HR <50 bpm'
+        'threshold' => 'HR <' . HR_BRADYCARDIA_SEVERE . ' bpm'
     ],
     'high_heart_rate' => [
         'id' => 'high_heart_rate',
@@ -139,7 +144,7 @@ $ALERT_TAXONOMY = [
         'color' => 'warning',
         'color_class' => 'bg-warning-soft',
         'text_class' => 'text-warning',
-        'threshold' => 'HR >100 bpm'
+        'threshold' => 'HR >' . HR_NORMAL_MAX . ' bpm'
     ]
 ];
 

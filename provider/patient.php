@@ -733,45 +733,145 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Notes functionality
 function showAddNoteModal() {
-    const modal = new bootstrap.Modal(document.getElementById('addNoteModal'));
+    var modal = new bootstrap.Modal(document.getElementById('addNoteModal'));
     modal.show();
 }
 
 function savePatientNote() {
-    const noteType = document.getElementById('patientNoteType').value;
-    const noteText = document.getElementById('patientNoteText').value;
+    var noteType = document.getElementById('patientNoteType').value;
+    var noteText = document.getElementById('patientNoteText').value;
+    var saveBtn = document.querySelector('#addNoteModal .btn-primary');
     
     if (!noteText.trim()) {
         alert('Please enter a note');
         return;
     }
     
-    // In production, would save to API
-    const noteHtml = `
-        <div class="note-item mb-3 p-3 bg-light rounded">
-            <div class="d-flex justify-content-between align-items-start mb-2">
-                <div>
-                    <span class="badge bg-info-soft text-info me-2">${noteType}</span>
-                    <small class="text-muted"><?php echo htmlspecialchars($provider['name'] ?? 'Provider'); ?></small>
-                </div>
-                <small class="text-muted">Just now</small>
-            </div>
-            <p class="mb-0 small">${escapeHtml(noteText)}</p>
-        </div>
-    `;
+    // Disable button and show loading state
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Saving...';
     
-    document.getElementById('notesList').insertAdjacentHTML('afterbegin', noteHtml);
-    document.getElementById('noNotesMessage').style.display = 'none';
+    // Call API to save the note
+    var params = new URLSearchParams({
+        endpoint: 'create-note',
+        user_id: userId,
+        content: noteText,
+        note_type: noteType.toLowerCase(),
+        author: '<?php echo htmlspecialchars(sanitizeProviderName($provider['name'] ?? 'Provider'), ENT_QUOTES); ?>'
+    });
     
-    // Close modal and reset
-    bootstrap.Modal.getInstance(document.getElementById('addNoteModal')).hide();
-    document.getElementById('patientNoteText').value = '';
-    
-    showToast('Note saved successfully', 'success');
+    fetch('/includes/api-proxy.php?' + params.toString(), {
+        method: 'POST'
+    })
+    .then(function(response) {
+        return response.json();
+    })
+    .then(function(data) {
+        if (data && data.id) {
+            // Success - add note to the list
+            var noteHtml = '<div class="note-item mb-3 p-3 bg-light rounded">' +
+                '<div class="d-flex justify-content-between align-items-start mb-2">' +
+                '<div>' +
+                '<span class="badge bg-info-soft text-info me-2">' + escapeHtml(noteType) + '</span>' +
+                '<small class="text-muted"><?php echo htmlspecialchars(sanitizeProviderName($provider['name'] ?? 'Provider'), ENT_QUOTES); ?></small>' +
+                '</div>' +
+                '<small class="text-muted">Just now</small>' +
+                '</div>' +
+                '<p class="mb-0 small">' + escapeHtml(noteText) + '</p>' +
+                '</div>';
+            
+            document.getElementById('notesList').insertAdjacentHTML('afterbegin', noteHtml);
+            document.getElementById('noNotesMessage').style.display = 'none';
+            
+            // Close modal and reset
+            bootstrap.Modal.getInstance(document.getElementById('addNoteModal')).hide();
+            document.getElementById('patientNoteText').value = '';
+            
+            showToast('Note saved successfully', 'success');
+        } else {
+            throw new Error('Invalid response');
+        }
+    })
+    .catch(function(error) {
+        console.error('Save note failed:', error);
+        showToast('Failed to save note. Please try again.', 'error');
+    })
+    .finally(function() {
+        // Reset button
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Save Note';
+    });
 }
 
 function showScheduleFollowUpModal() {
-    alert('Follow-up scheduling would open a date picker modal in production.');
+    var modal = new bootstrap.Modal(document.getElementById('scheduleFollowUpModal'));
+    modal.show();
+}
+
+function saveFollowUp() {
+    var title = document.getElementById('followUpTitle').value;
+    var dueDate = document.getElementById('followUpDueDate').value;
+    var type = document.getElementById('followUpType').value;
+    var priority = document.getElementById('followUpPriority').value;
+    var description = document.getElementById('followUpDescription').value;
+    var saveBtn = document.querySelector('#scheduleFollowUpModal .btn-primary');
+    
+    if (!title.trim() || !dueDate) {
+        alert('Please enter a title and due date');
+        return;
+    }
+    
+    // Disable button and show loading state
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Scheduling...';
+    
+    // Call API to create follow-up
+    var params = new URLSearchParams({
+        endpoint: 'create-followup',
+        user_id: userId,
+        title: title,
+        due_date: dueDate,
+        followup_type: type,
+        priority: priority,
+        description: description,
+        assigned_to: '<?php echo htmlspecialchars(sanitizeProviderName($provider['name'] ?? 'Provider'), ENT_QUOTES); ?>'
+    });
+    
+    fetch('/includes/api-proxy.php?' + params.toString(), {
+        method: 'POST'
+    })
+    .then(function(response) {
+        return response.json();
+    })
+    .then(function(data) {
+        if (data && data.id) {
+            // Success
+            bootstrap.Modal.getInstance(document.getElementById('scheduleFollowUpModal')).hide();
+            
+            // Reset form
+            document.getElementById('followUpTitle').value = '';
+            document.getElementById('followUpDueDate').value = '';
+            document.getElementById('followUpDescription').value = '';
+            
+            showToast('Follow-up scheduled successfully', 'success');
+            
+            // Reload to show the new follow-up
+            setTimeout(function() {
+                window.location.reload();
+            }, 1000);
+        } else {
+            throw new Error('Invalid response');
+        }
+    })
+    .catch(function(error) {
+        console.error('Schedule follow-up failed:', error);
+        showToast('Failed to schedule follow-up. Please try again.', 'error');
+    })
+    .finally(function() {
+        // Reset button
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="bi bi-check-lg me-1"></i>Schedule';
+    });
 }
 
 function escapeHtml(text) {
@@ -822,6 +922,61 @@ function showToast(message, type) {
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary" onclick="savePatientNote()">
                     <i class="bi bi-check-lg me-1"></i>Save Note
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Schedule Follow-Up Modal -->
+<div class="modal fade" id="scheduleFollowUpModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-calendar-check me-2"></i>Schedule Follow-Up</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Patient</label>
+                    <p class="form-control-static fw-semibold mb-0"><?php echo htmlspecialchars($user['name'] ?? 'Patient'); ?></p>
+                </div>
+                <div class="mb-3">
+                    <label for="followUpTitle" class="form-label">Title <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="followUpTitle" placeholder="e.g., Review BP readings, Check medication compliance">
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="followUpDueDate" class="form-label">Due Date <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="followUpDueDate">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="followUpType" class="form-label">Type</label>
+                        <select class="form-select" id="followUpType">
+                            <option value="call">Phone Call</option>
+                            <option value="review">Chart Review</option>
+                            <option value="visit">In-Person Visit</option>
+                            <option value="message">Message Patient</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="followUpPriority" class="form-label">Priority</label>
+                    <select class="form-select" id="followUpPriority">
+                        <option value="normal">Normal</option>
+                        <option value="high">High</option>
+                        <option value="urgent">Urgent</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="followUpDescription" class="form-label">Notes (optional)</label>
+                    <textarea class="form-control" id="followUpDescription" rows="2" placeholder="Additional context or reminders..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveFollowUp()">
+                    <i class="bi bi-check-lg me-1"></i>Schedule
                 </button>
             </div>
         </div>
