@@ -420,6 +420,11 @@
 
 .table-bp-fraction.elevated .systolic,
 .table-bp-fraction.elevated .diastolic {
+    color: var(--status-warning);
+}
+
+.table-bp-fraction.high .systolic,
+.table-bp-fraction.high .diastolic {
     color: var(--status-danger);
 }
 
@@ -523,11 +528,90 @@
     color: var(--text-muted);
 }
 
-/* Mini Week Chart */
-.mini-week-chart {
+/* Daily Activity Chart */
+.daily-activity-chart {
     padding-top: var(--spacing-lg);
     border-top: 1px solid var(--border-color-light);
     margin-top: var(--spacing-sm);
+}
+
+.day-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.day-column.today {
+    position: relative;
+}
+
+.day-column.today::before {
+    content: '';
+    position: absolute;
+    inset: -4px -2px;
+    background: rgba(99, 102, 241, 0.06);
+    border-radius: var(--radius-md);
+    z-index: 0;
+}
+
+.day-bar-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    cursor: pointer;
+    z-index: 1;
+}
+
+.day-count {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.day-bar {
+    width: 100%;
+    max-width: 40px;
+    min-height: 20px;
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    transition: all var(--transition-fast);
+    position: relative;
+}
+
+.day-bar::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.25) 0%, transparent 60%);
+    border-radius: inherit;
+}
+
+.day-bar-wrapper:hover .day-bar {
+    transform: scaleY(1.1) scaleX(1.15);
+    transform-origin: bottom;
+    filter: brightness(1.1);
+}
+
+.day-bar-wrapper:hover .day-count {
+    color: var(--text-primary);
+}
+
+.day-label {
+    font-size: 0.7rem;
+    font-weight: 500;
+    margin-top: 6px;
+    z-index: 1;
+}
+
+/* Legacy support */
+.mini-week-chart {
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid var(--border-color-light);
 }
 
 .mini-bar {
@@ -535,35 +619,6 @@
     max-width: 32px;
     min-height: 6px;
     border-radius: var(--radius-md) var(--radius-md) 0 0;
-    transition: all var(--transition-normal);
-    position: relative;
-    background: var(--casana-purple) !important;
-}
-
-.mini-bar::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, transparent 100%);
-    border-radius: inherit;
-}
-
-.mini-bar:hover {
-    transform: scaleY(1.15) scaleX(1.1);
-    transform-origin: bottom;
-    box-shadow: 0 -4px 12px -4px rgba(99, 102, 241, 0.4);
-}
-
-.mini-bar.empty {
-    background: var(--bg-tertiary) !important;
-}
-
-.mini-bar.empty::before {
-    display: none;
-}
-
-.mini-week-chart .text-muted {
-    font-weight: var(--font-weight-medium);
 }
 
 /* Dark mode adjustments */
@@ -577,6 +632,18 @@
 
 [data-theme="dark"] .weekly-stat-item .progress {
     background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .day-column.today::before {
+    background: rgba(129, 140, 248, 0.1);
+}
+
+[data-theme="dark"] .day-count {
+    color: var(--text-muted);
+}
+
+[data-theme="dark"] .day-bar-wrapper:hover .day-count {
+    color: var(--text-secondary);
 }
 
 /* ==========================================================================
@@ -637,8 +704,10 @@
 .theme-toggle {
     display: flex;
     align-items: center;
-    gap: var(--spacing-sm);
-    padding: var(--spacing-xs) var(--spacing-sm);
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
     background: var(--bg-tertiary);
     border-radius: var(--radius-full);
     cursor: pointer;
@@ -650,11 +719,16 @@
 }
 
 .theme-toggle-icon {
-    width: 20px;
-    height: 20px;
+    width: 100%;
+    height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 1.1rem;
+}
+
+.theme-toggle-icon i {
+    line-height: 1;
 }
 
 .theme-toggle .sun-icon {
@@ -662,11 +736,11 @@
 }
 
 .theme-toggle .moon-icon {
-    display: block;
+    display: flex;
 }
 
 [data-theme="dark"] .theme-toggle .sun-icon {
-    display: block;
+    display: flex;
 }
 
 [data-theme="dark"] .theme-toggle .moon-icon {
@@ -1111,6 +1185,11 @@
 
 /* Vital card status colors */
 .vital-card-lg.elevated .vital-value {
+    color: var(--status-warning);
+}
+
+.vital-card-lg.high .vital-value,
+.vital-card-lg.critical .vital-value {
     color: var(--status-danger);
 }
 
@@ -1998,12 +2077,12 @@
 .sidebar {
     position: fixed;
     left: 0;
-    top: 0;
+    top: var(--navbar-height, 60px); /* Start below navbar */
     bottom: 0;
-    width: 240px;
+    width: var(--sidebar-width, 240px);
     background: var(--sidebar-bg);
     border-right: 1px solid var(--border-color);
-    z-index: 1000;
+    z-index: 990; /* Below navbar (1000) */
     display: flex;
     flex-direction: column;
 }
@@ -2085,8 +2164,8 @@
 
 /* Main content with sidebar */
 .main-with-sidebar {
-    margin-left: 240px;
-    min-height: 100vh;
+    margin-left: var(--sidebar-width, 240px);
+    min-height: calc(100vh - var(--navbar-height, 60px));
     padding: var(--spacing-lg);
 }
 
@@ -2704,7 +2783,14 @@ button:focus-visible,
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;
 }
 
+/* Elevated status - orange/warning (monitor closely) */
 .hero-stat-card.elevated::before {
+    background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 50%, #fcd34d 100%);
+}
+
+/* High status - red/danger (contact provider) */
+.hero-stat-card.high::before,
+.hero-stat-card.critical::before {
     background: linear-gradient(90deg, #ef4444 0%, #f87171 50%, #fca5a5 100%);
     animation: alertGlow 2s ease-in-out infinite;
 }
@@ -2741,7 +2827,14 @@ button:focus-visible,
     pointer-events: none;
 }
 
+/* Elevated - orange decoration */
 .hero-stat-card.elevated .card-decoration {
+    background: linear-gradient(135deg, var(--status-warning) 0%, transparent 70%);
+}
+
+/* High - red decoration */
+.hero-stat-card.high .card-decoration,
+.hero-stat-card.critical .card-decoration {
     background: linear-gradient(135deg, var(--status-danger) 0%, transparent 70%);
 }
 

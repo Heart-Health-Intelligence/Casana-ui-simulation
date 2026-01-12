@@ -492,25 +492,34 @@ function getInitials($name) {
  * 
  * @param array $data Vital signs data
  * @return string 'good', 'warning', or 'alert'
+ * 
+ * Blood Pressure Classifications (per AHA):
+ * - Normal: <120/<80
+ * - Elevated: 120-129/<80 (warning - monitor closely)
+ * - High Stage 1: 130-139/80-89 (alert - consider provider)
+ * - High Stage 2: >=140/>=90 (alert - contact provider)
  */
 function getHealthStatus($data) {
-    // Check for hypertension flag
-    if (isset($data['htn']) && $data['htn'] === true) {
-        return 'alert';
-    }
-    
     // Check blood pressure
     $systolic = isset($data['bp_systolic']) ? $data['bp_systolic'] : 0;
     $diastolic = isset($data['bp_diastolic']) ? $data['bp_diastolic'] : 0;
     
+    // High Stage 2 (>=140/>=90) - requires provider contact
     if ($systolic >= 140 || $diastolic >= 90) {
         return 'alert';
     }
-    if ($systolic >= 130 || $diastolic >= 85) {
+    
+    // High Stage 1 (130-139/80-89) - should consider provider
+    if ($systolic >= 130 || $diastolic >= 80) {
+        return 'alert';
+    }
+    
+    // Elevated (120-129/<80) - monitor closely, no provider contact needed
+    if ($systolic >= 120) {
         return 'warning';
     }
     
-    // Check oxygen
+    // Check oxygen - critical levels
     $spo2 = isset($data['blood_oxygenation']) ? $data['blood_oxygenation'] : 100;
     if ($spo2 < 92) {
         return 'alert';
@@ -519,7 +528,36 @@ function getHealthStatus($data) {
         return 'warning';
     }
     
+    // Check heart rate - outside normal range
+    $hr = isset($data['heart_rate']) ? $data['heart_rate'] : 75;
+    if ($hr < 50 || $hr > 120) {
+        return 'alert';
+    }
+    if ($hr < 60 || $hr > 100) {
+        return 'warning';
+    }
+    
     return 'good';
+}
+
+/**
+ * Get detailed BP status level
+ * 
+ * @param int $systolic Systolic BP
+ * @param int $diastolic Diastolic BP
+ * @return string 'normal', 'elevated', 'high', or 'critical'
+ */
+function getBPStatus($systolic, $diastolic) {
+    if ($systolic >= 140 || $diastolic >= 90) {
+        return 'critical'; // High Stage 2
+    }
+    if ($systolic >= 130 || $diastolic >= 80) {
+        return 'high'; // High Stage 1
+    }
+    if ($systolic >= 120) {
+        return 'elevated'; // Elevated
+    }
+    return 'normal';
 }
 
 /**
@@ -554,6 +592,30 @@ function getStatusMessage($status, $name) {
  */
 function formatBloodPressure($systolic, $diastolic) {
     return $systolic . '/' . $diastolic;
+}
+
+/**
+ * Sanitize provider/doctor name to remove duplicate honorifics
+ * Handles cases like "Dr. Dr. John Smith" -> "Dr. John Smith"
+ * 
+ * @param string $name Full name with possible honorifics
+ * @return string Sanitized name
+ */
+function sanitizeProviderName($name) {
+    if (empty($name)) {
+        return $name;
+    }
+    
+    // Remove duplicate "Dr." prefix (case-insensitive)
+    $name = preg_replace('/^(Dr\.?\s*)+/i', 'Dr. ', $name);
+    
+    // Remove duplicate "MD" suffix
+    $name = preg_replace('/(,?\s*MD\s*)+$/i', ' MD', $name);
+    
+    // Clean up any double spaces
+    $name = preg_replace('/\s+/', ' ', $name);
+    
+    return trim($name);
 }
 
 /**

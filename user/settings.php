@@ -43,7 +43,12 @@ require_once __DIR__ . '/../includes/header.php';
     
     <!-- Profile -->
     <div class="settings-group">
-        <h5 class="settings-title"><i class="bi bi-person me-2"></i>Profile</h5>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="settings-title mb-0"><i class="bi bi-person me-2"></i>Profile</h5>
+            <button class="btn btn-sm btn-outline-secondary" disabled title="Profile editing coming soon">
+                <i class="bi bi-pencil me-1"></i>Edit
+            </button>
+        </div>
         
         <div class="settings-item">
             <div>

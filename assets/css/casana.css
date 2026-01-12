@@ -70,6 +70,10 @@
     --spacing-xl: 2rem;
     --spacing-xxl: 3rem;
     
+    /* Layout */
+    --navbar-height: 60px;
+    --sidebar-width: 240px;
+    
     /* Border Radius */
     --radius-sm: 0.375rem;
     --radius-md: 0.75rem; /* Slightly more rounded */
@@ -809,9 +813,9 @@ a:hover {
     color: var(--status-info);
 }
 
-.bg-primary-soft {
-    background-color: rgba(99, 102, 241, 0.12);
-    color: var(--casana-purple);
+.bg-secondary-soft {
+    background-color: rgba(100, 116, 139, 0.1);
+    color: var(--text-secondary);
 }
 
 /* Dark mode soft badges with better contrast */
@@ -840,9 +844,9 @@ a:hover {
     color: #38bdf8;
 }
 
-[data-theme="dark"] .bg-primary-soft {
-    background-color: rgba(129, 140, 248, 0.18);
-    color: #818cf8;
+[data-theme="dark"] .bg-secondary-soft {
+    background-color: rgba(148, 163, 184, 0.12);
+    color: #94a3b8;
 }
 
 /* ==========================================================================
@@ -1287,6 +1291,30 @@ a:hover {
     /* Adjust stat card padding on mobile */
     .stat-card {
         padding: var(--spacing-lg);
+    }
+    
+    /* Better touch targets on mobile - minimum 44px */
+    .btn-sm {
+        min-height: 44px;
+        padding: 0.5rem 1rem;
+    }
+    
+    .form-select-sm,
+    .form-control-sm {
+        min-height: 44px;
+        padding: 0.5rem 0.75rem;
+    }
+    
+    /* Improve filter chip touch targets */
+    .filter-chip {
+        min-height: 44px;
+        padding: 0.5rem 1rem;
+    }
+    
+    /* Time selector buttons touch target */
+    .time-selector .time-option {
+        min-height: 44px;
+        min-width: 48px;
     }
 }
 

@@ -43,7 +43,7 @@ require_once __DIR__ . '/../includes/provider-sidebar.php';
         <div class="row align-items-center">
             <div class="col">
                 <div class="welcome-greeting"><?php echo getTimeGreeting(); ?></div>
-                <h1 class="welcome-name"><?php echo htmlspecialchars($provider['name'] ?? 'Doctor'); ?></h1>
+                <h1 class="welcome-name"><?php echo htmlspecialchars(sanitizeProviderName($provider['name'] ?? 'Doctor')); ?></h1>
                 <p class="welcome-summary mb-0">
                     You have <strong><?php echo $alertCount; ?></strong> active alerts and <strong><?php echo $provider['total_patients'] ?? 0; ?></strong> patients in your care
                 </p>

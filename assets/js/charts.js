@@ -456,13 +456,7 @@ const CasanaCharts = {
                 plugins: {
                     ...this.defaultOptions.plugins,
                     legend: {
-                        display: true,
-                        position: 'top',
-                        labels: {
-                            color: colors.text,
-                            usePointStyle: true,
-                            padding: 20,
-                        },
+                        display: false, // Disable built-in legend - use HTML legend instead for consistency
                     },
                 },
                 scales: {

@@ -132,6 +132,13 @@ $firstName = $monitoredUser ? explode(' ', $userName)[0] : 'this person';
         <div class="profile-info">
             <?php if ($relationshipLabel): ?>
             <span class="relationship-label"><?php echo htmlspecialchars($relationshipLabel); ?></span>
+            <button class="btn-edit-relationship" onclick="editRelationship()" title="Edit relationship label">
+                <i class="bi bi-pencil"></i>
+            </button>
+            <?php else: ?>
+            <button class="btn-add-relationship" onclick="editRelationship()" title="Add a relationship label (e.g., Mom, Dad, Grandma)">
+                <i class="bi bi-plus-circle me-1"></i>Add relationship
+            </button>
             <?php endif; ?>
             
             <h1 class="profile-name"><?php echo htmlspecialchars($userName); ?></h1>
@@ -802,6 +809,49 @@ $firstName = $monitoredUser ? explode(' ', $userName)[0] : 'this person';
     letter-spacing: 0.05em;
     color: var(--text-muted);
     margin-bottom: 0.25rem;
+}
+
+.btn-edit-relationship {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.65rem;
+    cursor: pointer;
+    border-radius: 50%;
+    transition: all var(--transition-fast);
+    vertical-align: middle;
+    margin-left: 4px;
+}
+
+.btn-edit-relationship:hover {
+    background: var(--bg-hover);
+    color: var(--casana-purple);
+}
+
+.btn-add-relationship {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--casana-purple);
+    background: transparent;
+    border: 1px dashed var(--border-color);
+    border-radius: var(--radius-full);
+    padding: 0.25rem 0.75rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    margin-bottom: 0.5rem;
+}
+
+.btn-add-relationship:hover {
+    background: rgba(99, 102, 241, 0.08);
+    border-color: var(--casana-purple);
 }
 
 .profile-name {
@@ -1864,5 +1914,25 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 <?php endif; ?>
+
+<script>
+// Relationship label editing
+function editRelationship() {
+    const currentLabel = '<?php echo htmlspecialchars($relationshipLabel ?? '', ENT_QUOTES); ?>';
+    const suggestions = ['Mom', 'Dad', 'Grandma', 'Grandpa', 'Spouse', 'Parent', 'Aunt', 'Uncle'];
+    
+    let newLabel = prompt(
+        'Enter a relationship label for <?php echo htmlspecialchars($firstName ?? "this person", ENT_QUOTES); ?>:\n\n' +
+        'Suggestions: ' + suggestions.join(', '),
+        currentLabel
+    );
+    
+    if (newLabel !== null && newLabel.trim() !== currentLabel) {
+        // In production, this would make an API call to save the relationship
+        alert('Relationship label would be saved as: "' + newLabel.trim() + '"\n\nThis feature requires API integration.');
+        // window.location.reload(); // Uncomment when API is connected
+    }
+}
+</script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

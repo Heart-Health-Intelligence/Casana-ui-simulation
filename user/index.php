@@ -38,13 +38,15 @@ if ($hour >= 5 && $hour < 12) {
     $greeting = 'Good afternoon';
 }
 
-// Get health summary
+// Get unified health status using the same function as the banner
+$healthStatus = 'good';
 $healthSummary = 'Your vitals look good today';
 if ($latestRecording) {
-    if ($latestRecording['htn']) {
-        $healthSummary = '1 reading needs your attention';
-    } elseif ($latestRecording['blood_oxygenation'] < 95) {
-        $healthSummary = 'Oxygen levels slightly below optimal';
+    $healthStatus = getHealthStatus($latestRecording);
+    if ($healthStatus === 'alert') {
+        $healthSummary = 'Some readings need your attention';
+    } elseif ($healthStatus === 'warning') {
+        $healthSummary = 'Some readings are slightly elevated';
     } else {
         $healthSummary = 'All vitals within normal range';
     }
@@ -56,10 +58,12 @@ if ($latestRecording) {
         <div class="text-center text-md-start">
             <h1 class="h2 fw-bold mb-1" style="letter-spacing: -0.02em;"><?php echo $greeting; ?>, <?php echo htmlspecialchars(explode(' ', $user['name'] ?? 'User')[0]); ?></h1>
             <p class="text-secondary mb-0 d-flex align-items-center justify-content-center justify-content-md-start gap-2">
-                <?php if ($latestRecording && !$latestRecording['htn']): ?>
+                <?php if ($latestRecording && $healthStatus === 'good'): ?>
                 <span class="d-inline-block rounded-circle bg-success" style="width: 8px; height: 8px;"></span>
-                <?php elseif ($latestRecording && $latestRecording['htn']): ?>
+                <?php elseif ($latestRecording && $healthStatus === 'warning'): ?>
                 <span class="d-inline-block rounded-circle bg-warning" style="width: 8px; height: 8px; animation: pulse 2s infinite;"></span>
+                <?php elseif ($latestRecording && $healthStatus === 'alert'): ?>
+                <span class="d-inline-block rounded-circle bg-danger" style="width: 8px; height: 8px; animation: pulse 2s infinite;"></span>
                 <?php endif; ?>
                 <?php echo $healthSummary; ?>
             </p>
@@ -88,7 +92,7 @@ if ($latestRecording) {
         $status = getHealthStatus($latestRecording);
         $statusMessages = [
             'good' => ['All vitals are within normal range', 'bg-success-soft', 'bi-check-circle-fill', 'text-success', 'Keep it up!'],
-            'warning' => ['Some readings are outside normal range', 'bg-warning-soft', 'bi-exclamation-circle-fill', 'text-warning', 'Monitor closely'],
+            'warning' => ['Some readings are slightly elevated', 'bg-warning-soft', 'bi-info-circle-fill', 'text-warning', 'Monitor closely'],
             'alert' => ['Please contact your provider regarding recent readings', 'bg-danger-soft', 'bi-exclamation-triangle-fill', 'text-danger', 'Action needed']
         ];
         $statusInfo = $statusMessages[$status];
@@ -141,25 +145,30 @@ if ($latestRecording) {
         </div>
         
         <!-- Primary Vitals Grid -->
+        <?php 
+        // Get detailed BP status (normal, elevated, high, critical)
+        $bpStatus = getBPStatus($latestRecording['bp_systolic'], $latestRecording['bp_diastolic']);
+        $bpColorMap = [
+            'normal' => ['var(--text-primary)', 'bg-success-soft', 'bi-check-circle-fill', 'Normal Range'],
+            'elevated' => ['var(--status-warning)', 'bg-warning-soft', 'bi-info-circle-fill', 'Elevated'],
+            'high' => ['var(--status-danger)', 'bg-danger-soft', 'bi-exclamation-triangle-fill', 'High'],
+            'critical' => ['var(--status-danger)', 'bg-danger-soft', 'bi-exclamation-triangle-fill', 'High']
+        ];
+        $bpColor = $bpColorMap[$bpStatus];
+        ?>
         <div class="row g-4 mb-4 animate-stagger">
             <div class="col-md-6">
-                <div class="hero-stat-card <?php echo $latestRecording['htn'] ? 'elevated' : ''; ?> h-100 d-flex flex-column align-items-center justify-content-center text-center ripple">
+                <div class="hero-stat-card <?php echo $bpStatus !== 'normal' ? $bpStatus : ''; ?> h-100 d-flex flex-column align-items-center justify-content-center text-center ripple">
                     <div class="card-decoration"></div>
                     <div class="mb-3 text-secondary text-uppercase fw-medium tracking-wide small">Blood Pressure</div>
-                    <div class="bp-fraction-lg mb-3" style="color: <?php echo $latestRecording['htn'] ? 'var(--status-danger)' : 'var(--text-primary)'; ?>">
+                    <div class="bp-fraction-lg mb-3" style="color: <?php echo $bpColor[0]; ?>">
                         <span class="bp-systolic"><?php echo $latestRecording['bp_systolic']; ?></span>
                         <span class="bp-divider"></span>
                         <span class="bp-diastolic"><?php echo $latestRecording['bp_diastolic']; ?></span>
                     </div>
-                    <?php if ($latestRecording['htn']): ?>
-                    <div class="badge bg-danger-soft rounded-pill px-3 py-2">
-                        <i class="bi bi-exclamation-triangle-fill me-1"></i>Elevated
+                    <div class="badge <?php echo $bpColor[1]; ?> rounded-pill px-3 py-2">
+                        <i class="bi <?php echo $bpColor[2]; ?> me-1"></i><?php echo $bpColor[3]; ?>
                     </div>
-                    <?php else: ?>
-                    <div class="badge bg-success-soft rounded-pill px-3 py-2">
-                        <i class="bi bi-check-circle-fill me-1"></i>Normal Range
-                    </div>
-                    <?php endif; ?>
                     <?php 
                     // Calculate comparison to yesterday's average if available
                     $bpChange = null;
@@ -388,25 +397,64 @@ if ($latestRecording) {
                     </div>
                 </div>
                 
-                <!-- Mini Week Chart -->
-                <div class="mini-week-chart mt-4">
-                    <div class="d-flex align-items-end justify-content-between gap-1" style="height: 50px;">
+                <!-- Daily Activity Chart -->
+                <div class="daily-activity-chart mt-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="small text-muted fw-medium">Daily Readings</span>
+                        <div class="d-flex gap-3 small">
+                            <span class="d-flex align-items-center gap-1">
+                                <span style="width: 8px; height: 8px; background: var(--status-success); border-radius: 2px;"></span>
+                                <span class="text-muted">Normal</span>
+                            </span>
+                            <span class="d-flex align-items-center gap-1">
+                                <span style="width: 8px; height: 8px; background: var(--status-warning); border-radius: 2px;"></span>
+                                <span class="text-muted">Elevated</span>
+                            </span>
+                            <span class="d-flex align-items-center gap-1">
+                                <span style="width: 8px; height: 8px; background: var(--status-danger); border-radius: 2px;"></span>
+                                <span class="text-muted">High</span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-end justify-content-between gap-2" style="height: 140px;">
                         <?php 
                         $maxReadings = max(array_column($trends, 'recording_count'));
+                        if ($maxReadings == 0) $maxReadings = 1;
+                        
                         foreach ($trends as $day): 
-                            $barHeight = 10;
-                            if ($maxReadings > 0) {
-                                $barHeight = ($day['recording_count'] / $maxReadings) * 100;
+                            $count = $day['recording_count'];
+                            // Scale bars to show variation - minimum 25% for days with readings
+                            $rawHeight = ($count / $maxReadings) * 100;
+                            $barHeight = $count > 0 ? max(25, $rawHeight) : 15;
+                            $htnPct = $day['htn_percentage'] ?? 0;
+                            
+                            // Color based on health status
+                            $barColor = 'var(--status-success)';
+                            if ($htnPct > 50) {
+                                $barColor = 'var(--status-danger)';
+                            } elseif ($htnPct > 0) {
+                                $barColor = 'var(--status-warning)';
                             }
-                            $barBg = 'var(--border-color)';
-                            if ($day['recording_count'] > 0) {
-                                $barBg = 'var(--casana-purple)';
+                            
+                            // Gray out days with no readings
+                            if ($count == 0) {
+                                $barColor = 'var(--border-color)';
+                                $barHeight = 15;
                             }
+                            
                             $dayName = date('D', strtotime($day['date']));
+                            $isToday = date('Y-m-d', strtotime($day['date'])) === date('Y-m-d');
+                            $avgBP = isset($day['avg_bp_systolic']) ? round($day['avg_bp_systolic']) . '/' . round($day['avg_bp_diastolic']) : '--';
                         ?>
-                        <div class="text-center flex-fill">
-                            <div class="mini-bar mx-auto" style="height: <?php echo max(10, $barHeight); ?>%; background: <?php echo $barBg; ?>;"></div>
-                            <small class="text-muted d-block mt-1" style="font-size: 0.65rem;"><?php echo $dayName; ?></small>
+                        <div class="text-center flex-fill day-column <?php echo $isToday ? 'today' : ''; ?>">
+                            <div class="day-bar-wrapper" 
+                                 title="<?php echo $dayName; ?>: <?php echo $count; ?> reading<?php echo $count !== 1 ? 's' : ''; ?><?php echo $count > 0 ? ', BP: ' . $avgBP : ''; ?>">
+                                <?php if ($count > 0): ?>
+                                <span class="day-count"><?php echo $count; ?></span>
+                                <?php endif; ?>
+                                <div class="day-bar" style="height: <?php echo $barHeight; ?>%; background: <?php echo $barColor; ?>;"></div>
+                            </div>
+                            <small class="day-label <?php echo $isToday ? 'fw-bold text-primary' : 'text-muted'; ?>"><?php echo $dayName; ?></small>
                         </div>
                         <?php endforeach; ?>
                     </div>

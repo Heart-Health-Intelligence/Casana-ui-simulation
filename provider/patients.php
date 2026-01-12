@@ -56,6 +56,9 @@ require_once __DIR__ . '/../includes/provider-sidebar.php';
             <button class="filter-chip" data-view="inactive">
                 <i class="bi bi-clock"></i>No Data (7 days)
             </button>
+            <button class="filter-chip" data-view="trends">
+                <i class="bi bi-graph-up-arrow"></i>Trending
+            </button>
             <button class="filter-chip" data-view="deteriorating">
                 <i class="bi bi-arrow-down-circle"></i>Deteriorating
             </button>
@@ -94,18 +97,18 @@ require_once __DIR__ . '/../includes/provider-sidebar.php';
                 </div>
                 <div class="col-md-2">
                     <select class="form-select form-select-sm" id="genderFilter" aria-label="Filter by gender">
-                        <option value="">All</option>
+                        <option value="">All Genders</option>
                         <option value="Male">Male</option>
                         <option value="Female">Female</option>
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <select class="form-select form-select-sm" id="recencyFilter" aria-label="Filter by recency">
-                        <option value="">All Recency</option>
+                    <select class="form-select form-select-sm" id="recencyFilter" aria-label="Filter by recency" style="min-width: 130px;">
+                        <option value="">All Activity</option>
                         <option value="today">Today</option>
                         <option value="3days">Last 3 days</option>
                         <option value="7days">Last 7 days</option>
-                        <option value="inactive">Inactive (7+ days)</option>
+                        <option value="inactive">Inactive (7+)</option>
                     </select>
                 </div>
             </div>
@@ -271,8 +274,33 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Update filteredPatients with enriched data
     filteredPatients = [...patients];
-    sortPatients();
-    renderPatients();
+    
+    // Check for view URL parameter and activate corresponding filter
+    const urlParams = new URLSearchParams(window.location.search);
+    const viewParam = urlParams.get('view');
+    if (viewParam) {
+        const validViews = ['all', 'needs-review', 'inactive', 'trends', 'deteriorating', 'stable'];
+        if (validViews.includes(viewParam)) {
+            currentQuickView = viewParam;
+            // Update filter chip active state
+            document.querySelectorAll('.filter-chip[data-view]').forEach(b => b.classList.remove('active'));
+            const targetChip = document.querySelector(`.filter-chip[data-view="${viewParam}"]`);
+            if (targetChip) {
+                targetChip.classList.add('active');
+            }
+            // For trends view, sort by trend type to show deteriorating/improving first
+            if (viewParam === 'trends') {
+                currentSort = { field: 'trend_type', direction: 'asc' };
+            }
+            applyFilters();
+        } else {
+            sortPatients();
+            renderPatients();
+        }
+    } else {
+        sortPatients();
+        renderPatients();
+    }
     
     // Set up filter listeners
     document.getElementById('searchInput').addEventListener('input', debounce(applyFilters, 300));
@@ -340,6 +368,7 @@ function applyFilters() {
         // Quick view filter
         if (currentQuickView === 'needs-review' && !patient.needsReview) return false;
         if (currentQuickView === 'inactive' && !patient.isInactive) return false;
+        if (currentQuickView === 'trends' && patient.trend_type === 'stable') return false;
         if (currentQuickView === 'deteriorating' && patient.trend_type !== 'deteriorating') return false;
         if (currentQuickView === 'stable' && patient.trend_type !== 'stable') return false;
         
@@ -480,7 +509,7 @@ function renderPatients() {
             <td>
                 ${patient.alertCount > 0 ? 
                     `<span class="alert-indicator bg-danger-soft text-danger">${patient.alertCount}</span>` : 
-                    '<span class="text-muted">—</span>'}
+                    '<span class="alert-indicator bg-secondary-soft text-muted">0</span>'}
             </td>
             <td>
                 <span class="${recencyClass} small">
@@ -488,7 +517,7 @@ function renderPatients() {
                 </span>
             </td>
             <td>
-                <div class="d-flex align-items-center gap-2">
+                <div class="d-flex align-items-center gap-2" title="Adherence: ${patient.adherence}% of expected readings captured this week">
                     <div class="adherence-bar">
                         <div class="adherence-fill" style="width: ${patient.adherence}%; background: ${adherenceColor};"></div>
                     </div>

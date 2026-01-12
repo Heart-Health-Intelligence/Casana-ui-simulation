@@ -251,7 +251,11 @@ function renderEntities(list) {
     
     let html = '';
     list.forEach(entity => {
-        const name = entity.name || entity.practice_name || 'Unknown';
+        let name = entity.name || entity.practice_name || 'Unknown';
+        // Sanitize provider names to remove duplicate honorifics
+        if (currentRole === 'provider') {
+            name = sanitizeProviderName(name);
+        }
         const initials = getInitials(name);
         let details = '';
         let url = '';
@@ -336,6 +340,20 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+/**
+ * Sanitize provider name to remove duplicate honorifics
+ * E.g., "Dr. Dr. John Smith MD MD" -> "Dr. John Smith MD"
+ */
+function sanitizeProviderName(name) {
+    if (!name) return name;
+    // Remove duplicate "Dr." prefix
+    name = name.replace(/^(Dr\.?\s*)+/i, 'Dr. ');
+    // Remove duplicate "MD" suffix  
+    name = name.replace(/(,?\s*MD\s*)+$/i, ' MD');
+    // Clean up double spaces
+    return name.replace(/\s+/g, ' ').trim();
 }
 </script>
 

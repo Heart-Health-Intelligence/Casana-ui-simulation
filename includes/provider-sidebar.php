@@ -16,13 +16,14 @@ $alertCount = isset($alertCount) ? $alertCount : 0;
 ?>
 <aside class="sidebar hide-mobile" id="providerSidebar">
     <div class="sidebar-header">
+        <?php $sanitizedName = sanitizeProviderName($provider['name'] ?? 'Provider'); ?>
         <div class="d-flex align-items-center gap-3">
             <div class="entity-avatar provider-avatar" style="width: 48px; height: 48px; font-size: 1.25rem;">
                 <?php echo getInitials($provider['name'] ?? 'Dr'); ?>
             </div>
             <div class="sidebar-identity">
-                <div class="fw-semibold"><?php echo htmlspecialchars($provider['name'] ?? 'Provider'); ?></div>
-                <div class="small text-muted"><?php echo htmlspecialchars($provider['practice_name'] ?? ''); ?></div>
+                <div class="fw-semibold text-truncate" title="<?php echo htmlspecialchars($sanitizedName); ?>"><?php echo htmlspecialchars($sanitizedName); ?></div>
+                <div class="small text-muted text-truncate" title="<?php echo htmlspecialchars($provider['practice_name'] ?? ''); ?>"><?php echo htmlspecialchars($provider['practice_name'] ?? ''); ?></div>
             </div>
         </div>
     </div>
@@ -82,7 +83,7 @@ $alertCount = isset($alertCount) ? $alertCount : 0;
             <ul class="dropdown-menu dropdown-menu-end w-100">
                 <li>
                     <span class="dropdown-item-text">
-                        <strong><?php echo htmlspecialchars($provider['name'] ?? 'Provider'); ?></strong>
+                        <strong><?php echo htmlspecialchars(sanitizeProviderName($provider['name'] ?? 'Provider')); ?></strong>
                         <br><small class="text-muted"><?php echo htmlspecialchars($provider['email'] ?? ''); ?></small>
                     </span>
                 </li>

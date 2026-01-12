@@ -189,13 +189,11 @@ require_once __DIR__ . '/../includes/provider-sidebar.php';
                                 </div>
                             </td>
                             <td>
-                                <div class="d-flex flex-column">
-                                    <span class="<?php echo $isRecent ? 'text-danger fw-semibold' : 'text-muted'; ?> small">
-                                        <?php echo $isRecent ? '<i class="bi bi-circle-fill me-1" style="font-size: 0.5rem;"></i>' : ''; ?>
-                                        <?php echo formatRelativeTime($alert['sit_time']); ?>
-                                    </span>
-                                    <span class="text-muted small"><?php echo date('M j, g:i A', strtotime($alert['sit_time'])); ?></span>
-                                </div>
+                                <span class="<?php echo $isRecent ? 'text-danger fw-semibold' : 'text-muted'; ?>" 
+                                      title="<?php echo date('M j, Y \a\t g:i A', strtotime($alert['sit_time'])); ?>">
+                                    <?php echo $isRecent ? '<i class="bi bi-circle-fill me-1" style="font-size: 0.5rem;"></i>' : ''; ?>
+                                    <?php echo formatRelativeTime($alert['sit_time']); ?>
+                                </span>
                             </td>
                             <td>
                                 <div class="alert-actions d-flex gap-1">
