@@ -1,0 +1,2747 @@
+{
+    "swagger": "2.0",
+    "basePath": "/",
+    "paths": {
+        "/api/care-providers/": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "summary": "List all care providers with pagination",
+                "operationId": "list_care_providers",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "in": "query",
+                        "description": "Items per page",
+                        "name": "per_page"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "in": "query",
+                        "description": "Page number",
+                        "name": "page"
+                    }
+                ],
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "care-providers"
+                ]
+            }
+        },
+        "/api/care-providers/{id}": {
+            "parameters": [
+                {
+                    "in": "path",
+                    "description": "Provider ID",
+                    "name": "id",
+                    "required": true,
+                    "type": "integer"
+                }
+            ],
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/CareProviderDetail"
+                        }
+                    }
+                },
+                "summary": "Get care provider details with patient list",
+                "operationId": "get_care_provider",
+                "parameters": [
+                    {
+                        "name": "X-Fields",
+                        "in": "header",
+                        "type": "string",
+                        "format": "mask",
+                        "description": "An optional fields mask"
+                    }
+                ],
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "care-providers"
+                ]
+            }
+        },
+        "/api/care-providers/{id}/patients/{user_id}": {
+            "parameters": [
+                {
+                    "in": "path",
+                    "description": "User ID",
+                    "name": "user_id",
+                    "required": true,
+                    "type": "integer"
+                },
+                {
+                    "in": "path",
+                    "description": "Provider ID",
+                    "name": "id",
+                    "required": true,
+                    "type": "integer"
+                }
+            ],
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "summary": "Get detailed patient information for a care provider",
+                "operationId": "get_patient_detail",
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "care-providers"
+                ]
+            }
+        },
+        "/api/care-providers/{id}/population-stats": {
+            "parameters": [
+                {
+                    "in": "path",
+                    "description": "Provider ID",
+                    "name": "id",
+                    "required": true,
+                    "type": "integer"
+                }
+            ],
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/PopulationStats"
+                        }
+                    }
+                },
+                "summary": "Get aggregate statistics for a care provider's patient population",
+                "operationId": "get_population_stats",
+                "parameters": [
+                    {
+                        "name": "X-Fields",
+                        "in": "header",
+                        "type": "string",
+                        "format": "mask",
+                        "description": "An optional fields mask"
+                    }
+                ],
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "care-providers"
+                ]
+            }
+        },
+        "/api/clinical/alerts": {
+            "post": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "summary": "Create a new alert from a recording",
+                "operationId": "create_alert",
+                "parameters": [
+                    {
+                        "name": "payload",
+                        "required": true,
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/AlertCreate"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "clinical"
+                ]
+            },
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "summary": "List clinical alerts with filtering",
+                "operationId": "list_clinical_alerts",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "in": "query",
+                        "description": "Items per page",
+                        "name": "per_page"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "in": "query",
+                        "description": "Page number",
+                        "name": "page"
+                    },
+                    {
+                        "type": "integer",
+                        "in": "query",
+                        "description": "Filter by patient ID",
+                        "name": "user_id"
+                    },
+                    {
+                        "in": "query",
+                        "description": "Filter by severity: critical, high",
+                        "name": "severity",
+                        "type": "string"
+                    },
+                    {
+                        "default": "active",
+                        "in": "query",
+                        "description": "Filter by status: active, acknowledged, resolved, dismissed",
+                        "name": "status",
+                        "type": "string"
+                    }
+                ],
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "clinical"
+                ]
+            }
+        },
+        "/api/clinical/alerts/{id}": {
+            "parameters": [
+                {
+                    "in": "path",
+                    "description": "Alert ID",
+                    "name": "id",
+                    "required": true,
+                    "type": "integer"
+                }
+            ],
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "summary": "Get alert details",
+                "operationId": "get_alert",
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "clinical"
+                ]
+            }
+        },
+        "/api/clinical/alerts/{id}/acknowledge": {
+            "parameters": [
+                {
+                    "in": "path",
+                    "description": "Alert ID",
+                    "name": "id",
+                    "required": true,
+                    "type": "integer"
+                }
+            ],
+            "post": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "summary": "Acknowledge an alert (mark as seen/being handled)",
+                "operationId": "acknowledge_alert",
+                "parameters": [
+                    {
+                        "name": "payload",
+                        "required": true,
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/AcknowledgeAlert"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "clinical"
+                ]
+            }
+        },
+        "/api/clinical/alerts/{id}/dismiss": {
+            "parameters": [
+                {
+                    "in": "path",
+                    "description": "Alert ID",
+                    "name": "id",
+                    "required": true,
+                    "type": "integer"
+                }
+            ],
+            "post": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "summary": "Dismiss an alert (false positive or not actionable)",
+                "operationId": "dismiss_alert",
+                "parameters": [
+                    {
+                        "name": "payload",
+                        "required": true,
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/DismissAlert"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "clinical"
+                ]
+            }
+        },
+        "/api/clinical/alerts/{id}/resolve": {
+            "parameters": [
+                {
+                    "in": "path",
+                    "description": "Alert ID",
+                    "name": "id",
+                    "required": true,
+                    "type": "integer"
+                }
+            ],
+            "post": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "summary": "Resolve an alert (mark as handled/closed)",
+                "operationId": "resolve_alert",
+                "parameters": [
+                    {
+                        "name": "payload",
+                        "required": true,
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/ResolveAlert"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "clinical"
+                ]
+            }
+        },
+        "/api/clinical/followups": {
+            "post": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "summary": "Create a new follow-up",
+                "operationId": "create_followup",
+                "parameters": [
+                    {
+                        "name": "payload",
+                        "required": true,
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/FollowupCreate"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "clinical"
+                ]
+            },
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "summary": "List follow-ups",
+                "operationId": "list_followups",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "in": "query",
+                        "description": "Items per page",
+                        "name": "per_page"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "in": "query",
+                        "description": "Page number",
+                        "name": "page"
+                    },
+                    {
+                        "in": "query",
+                        "description": "Filter by due date (ISO format)",
+                        "name": "due_before",
+                        "type": "string"
+                    },
+                    {
+                        "in": "query",
+                        "description": "Filter by priority: low, normal, high, urgent",
+                        "name": "priority",
+                        "type": "string"
+                    },
+                    {
+                        "in": "query",
+                        "description": "Filter by assignee",
+                        "name": "assigned_to",
+                        "type": "string"
+                    },
+                    {
+                        "in": "query",
+                        "description": "Filter by status: pending, in_progress, completed, cancelled",
+                        "name": "status",
+                        "type": "string"
+                    },
+                    {
+                        "type": "integer",
+                        "in": "query",
+                        "description": "Filter by patient ID",
+                        "name": "user_id"
+                    }
+                ],
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "clinical"
+                ]
+            }
+        },
+        "/api/clinical/followups/overdue": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "summary": "List all overdue follow-ups",
+                "operationId": "list_overdue_followups",
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "clinical"
+                ]
+            }
+        },
+        "/api/clinical/followups/{id}": {
+            "parameters": [
+                {
+                    "in": "path",
+                    "description": "Follow-up ID",
+                    "name": "id",
+                    "required": true,
+                    "type": "integer"
+                }
+            ],
+            "put": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "summary": "Update a follow-up",
+                "operationId": "update_followup",
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "clinical"
+                ]
+            },
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "summary": "Get follow-up details",
+                "operationId": "get_followup",
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "clinical"
+                ]
+            }
+        },
+        "/api/clinical/followups/{id}/complete": {
+            "parameters": [
+                {
+                    "in": "path",
+                    "description": "Follow-up ID",
+                    "name": "id",
+                    "required": true,
+                    "type": "integer"
+                }
+            ],
+            "post": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "summary": "Mark a follow-up as completed",
+                "operationId": "complete_followup",
+                "parameters": [
+                    {
+                        "name": "payload",
+                        "required": true,
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/CompleteFollowup"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "clinical"
+                ]
+            }
+        },
+        "/api/clinical/notes": {
+            "post": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "summary": "Create a new patient note",
+                "operationId": "create_note",
+                "parameters": [
+                    {
+                        "name": "payload",
+                        "required": true,
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/NoteCreate"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "clinical"
+                ]
+            },
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "summary": "List patient notes",
+                "operationId": "list_notes",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "in": "query",
+                        "description": "Items per page",
+                        "name": "per_page"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "in": "query",
+                        "description": "Page number",
+                        "name": "page"
+                    },
+                    {
+                        "in": "query",
+                        "description": "Filter by author name",
+                        "name": "author",
+                        "type": "string"
+                    },
+                    {
+                        "in": "query",
+                        "description": "Filter by type: general, clinical, care_plan, observation",
+                        "name": "note_type",
+                        "type": "string"
+                    },
+                    {
+                        "type": "integer",
+                        "in": "query",
+                        "description": "Filter by patient ID",
+                        "name": "user_id"
+                    }
+                ],
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "clinical"
+                ]
+            }
+        },
+        "/api/clinical/notes/{id}": {
+            "parameters": [
+                {
+                    "in": "path",
+                    "description": "Note ID",
+                    "name": "id",
+                    "required": true,
+                    "type": "integer"
+                }
+            ],
+            "put": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "summary": "Update a note",
+                "operationId": "update_note",
+                "parameters": [
+                    {
+                        "name": "payload",
+                        "required": true,
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/NoteUpdate"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "clinical"
+                ]
+            },
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "summary": "Get note details",
+                "operationId": "get_note",
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "clinical"
+                ]
+            },
+            "delete": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "summary": "Delete a note",
+                "operationId": "delete_note",
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "clinical"
+                ]
+            }
+        },
+        "/api/metadata/bulk/{entity_type}/{entity_id}": {
+            "parameters": [
+                {
+                    "in": "path",
+                    "description": "Entity ID",
+                    "name": "entity_id",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "in": "path",
+                    "description": "Entity type",
+                    "name": "entity_type",
+                    "required": true,
+                    "type": "string"
+                }
+            ],
+            "put": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "summary": "Set multiple metadata keys at once",
+                "operationId": "bulk_set_metadata",
+                "parameters": [
+                    {
+                        "name": "payload",
+                        "required": true,
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/BulkMetadataSet"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "metadata"
+                ]
+            }
+        },
+        "/api/metadata/search": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "summary": "Search metadata across entities",
+                "operationId": "search_metadata",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "in": "query",
+                        "description": "Items per page",
+                        "name": "per_page"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "in": "query",
+                        "description": "Page number",
+                        "name": "page"
+                    },
+                    {
+                        "in": "query",
+                        "description": "Filter by creator",
+                        "name": "created_by",
+                        "type": "string"
+                    },
+                    {
+                        "in": "query",
+                        "description": "Filter by metadata key",
+                        "name": "key",
+                        "type": "string"
+                    },
+                    {
+                        "in": "query",
+                        "description": "Filter by entity type",
+                        "name": "entity_type",
+                        "type": "string"
+                    }
+                ],
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "metadata"
+                ]
+            }
+        },
+        "/api/metadata/{entity_type}/{entity_id}": {
+            "parameters": [
+                {
+                    "in": "path",
+                    "description": "Entity ID",
+                    "name": "entity_id",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "in": "path",
+                    "description": "Entity type: user, seat, recording, monitor, care_provider",
+                    "name": "entity_type",
+                    "required": true,
+                    "type": "string"
+                }
+            ],
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "summary": "Get all metadata for an entity",
+                "operationId": "list_entity_metadata",
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "metadata"
+                ]
+            }
+        },
+        "/api/metadata/{entity_type}/{entity_id}/{key}": {
+            "parameters": [
+                {
+                    "in": "path",
+                    "description": "Metadata key (namespace your data)",
+                    "name": "key",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "in": "path",
+                    "description": "Entity ID",
+                    "name": "entity_id",
+                    "required": true,
+                    "type": "string"
+                },
+                {
+                    "in": "path",
+                    "description": "Entity type: user, seat, recording, monitor, care_provider",
+                    "name": "entity_type",
+                    "required": true,
+                    "type": "string"
+                }
+            ],
+            "put": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "summary": "Set metadata (create or update)",
+                "operationId": "set_metadata",
+                "parameters": [
+                    {
+                        "name": "payload",
+                        "required": true,
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/MetadataSet"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "metadata"
+                ]
+            },
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "summary": "Get specific metadata by key",
+                "operationId": "get_metadata",
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "metadata"
+                ]
+            },
+            "delete": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "summary": "Delete metadata by key",
+                "operationId": "delete_metadata",
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "metadata"
+                ]
+            }
+        },
+        "/api/monitors/": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "summary": "List all monitors with pagination",
+                "operationId": "list_monitors",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "in": "query",
+                        "description": "Items per page",
+                        "name": "per_page"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "in": "query",
+                        "description": "Page number",
+                        "name": "page"
+                    }
+                ],
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "monitors"
+                ]
+            }
+        },
+        "/api/monitors/{id}": {
+            "parameters": [
+                {
+                    "in": "path",
+                    "description": "Monitor ID",
+                    "name": "id",
+                    "required": true,
+                    "type": "integer"
+                }
+            ],
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/MonitorDetail"
+                        }
+                    }
+                },
+                "summary": "Get monitor details with their monitored users",
+                "operationId": "get_monitor",
+                "parameters": [
+                    {
+                        "name": "X-Fields",
+                        "in": "header",
+                        "type": "string",
+                        "format": "mask",
+                        "description": "An optional fields mask"
+                    }
+                ],
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "monitors"
+                ]
+            }
+        },
+        "/api/monitors/{id}/users/{user_id}/data": {
+            "parameters": [
+                {
+                    "in": "path",
+                    "description": "User ID",
+                    "name": "user_id",
+                    "required": true,
+                    "type": "integer"
+                },
+                {
+                    "in": "path",
+                    "description": "Monitor ID",
+                    "name": "id",
+                    "required": true,
+                    "type": "integer"
+                }
+            ],
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "summary": "Get data for a specific monitored user (respecting shared data permissions)",
+                "operationId": "get_monitored_user_data",
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "monitors"
+                ]
+            }
+        },
+        "/api/recordings/": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "summary": "List recordings with filters",
+                "operationId": "list_recordings",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "in": "query",
+                        "description": "Maximum duration in seconds",
+                        "name": "max_duration"
+                    },
+                    {
+                        "type": "integer",
+                        "in": "query",
+                        "description": "Minimum duration in seconds",
+                        "name": "min_duration"
+                    },
+                    {
+                        "type": "boolean",
+                        "in": "query",
+                        "description": "Only hypertensive readings",
+                        "name": "htn_only"
+                    },
+                    {
+                        "in": "query",
+                        "description": "End date filter (ISO format)",
+                        "name": "end_date",
+                        "type": "string"
+                    },
+                    {
+                        "in": "query",
+                        "description": "Start date filter (ISO format)",
+                        "name": "start_date",
+                        "type": "string"
+                    },
+                    {
+                        "in": "query",
+                        "description": "Filter by seat serial",
+                        "name": "seat_serial",
+                        "type": "string"
+                    },
+                    {
+                        "type": "integer",
+                        "in": "query",
+                        "description": "Filter by user ID",
+                        "name": "user_id"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "in": "query",
+                        "description": "Items per page",
+                        "name": "per_page"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "in": "query",
+                        "description": "Page number",
+                        "name": "page"
+                    }
+                ],
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "recordings"
+                ]
+            }
+        },
+        "/api/recordings/alerts": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "summary": "List recordings that warrant clinical attention",
+                "description": "Alerts are auto-dismissed after 7 days. Severity levels:\n- **critical**: SpO2 < 88%, HR < 45 or > 120, BP > 180/110\n- **high**: SpO2 < 90%, HR < 50 or > 110, BP > 160/100, sits > 45min\n- **moderate**: General HTN, extended sits > 30min",
+                "operationId": "list_alert_recordings",
+                "parameters": [
+                    {
+                        "default": "all",
+                        "in": "query",
+                        "description": "Filter by severity: all, high, critical",
+                        "name": "severity",
+                        "type": "string"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 7,
+                        "in": "query",
+                        "description": "Days to look back (max 7, older alerts auto-dismissed)",
+                        "name": "days"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "in": "query",
+                        "description": "Items per page",
+                        "name": "per_page"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "in": "query",
+                        "description": "Page number",
+                        "name": "page"
+                    }
+                ],
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "recordings"
+                ]
+            }
+        },
+        "/api/recordings/alerts/summary": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "summary": "Get summary counts of active alerts by type and severity",
+                "description": "Useful for dashboard displays showing alert badges.",
+                "operationId": "get_alert_summary",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 7,
+                        "in": "query",
+                        "description": "Days to look back (max 7)",
+                        "name": "days"
+                    }
+                ],
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "recordings"
+                ]
+            }
+        },
+        "/api/recordings/extended": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "summary": "List recordings with extended sit times (potential concern)",
+                "operationId": "list_extended_recordings",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "in": "query",
+                        "description": "Minimum duration in minutes",
+                        "name": "min_minutes"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "in": "query",
+                        "description": "Items per page",
+                        "name": "per_page"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "in": "query",
+                        "description": "Page number",
+                        "name": "page"
+                    }
+                ],
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "recordings"
+                ]
+            }
+        },
+        "/api/recordings/{id}": {
+            "parameters": [
+                {
+                    "in": "path",
+                    "description": "Recording ID",
+                    "name": "id",
+                    "required": true,
+                    "type": "integer"
+                }
+            ],
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/RecordingDetail"
+                        }
+                    }
+                },
+                "summary": "Get detailed recording including ECG trace",
+                "operationId": "get_recording",
+                "parameters": [
+                    {
+                        "name": "X-Fields",
+                        "in": "header",
+                        "type": "string",
+                        "format": "mask",
+                        "description": "An optional fields mask"
+                    }
+                ],
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "recordings"
+                ]
+            }
+        },
+        "/api/seats/": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "summary": "List all seats with pagination",
+                "operationId": "list_seats",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "description": "Filter by firmware version",
+                        "name": "firmware",
+                        "type": "string"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "in": "query",
+                        "description": "Items per page",
+                        "name": "per_page"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "in": "query",
+                        "description": "Page number",
+                        "name": "page"
+                    }
+                ],
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "seats"
+                ]
+            }
+        },
+        "/api/seats/{serial}": {
+            "parameters": [
+                {
+                    "in": "path",
+                    "description": "Seat serial number",
+                    "name": "serial",
+                    "required": true,
+                    "type": "string"
+                }
+            ],
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/SeatDetail"
+                        }
+                    }
+                },
+                "summary": "Get detailed seat information",
+                "operationId": "get_seat",
+                "parameters": [
+                    {
+                        "name": "X-Fields",
+                        "in": "header",
+                        "type": "string",
+                        "format": "mask",
+                        "description": "An optional fields mask"
+                    }
+                ],
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "seats"
+                ]
+            }
+        },
+        "/api/seats/{serial}/metadata": {
+            "parameters": [
+                {
+                    "in": "path",
+                    "description": "Seat serial number",
+                    "name": "serial",
+                    "required": true,
+                    "type": "string"
+                }
+            ],
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "summary": "Get seat connectivity metadata history",
+                "operationId": "get_seat_metadata",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "description": "End date filter (ISO format)",
+                        "name": "end_date",
+                        "type": "string"
+                    },
+                    {
+                        "in": "query",
+                        "description": "Start date filter (ISO format)",
+                        "name": "start_date",
+                        "type": "string"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "in": "query",
+                        "description": "Items per page",
+                        "name": "per_page"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "in": "query",
+                        "description": "Page number",
+                        "name": "page"
+                    }
+                ],
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "seats"
+                ]
+            }
+        },
+        "/api/seats/{serial}/recordings": {
+            "parameters": [
+                {
+                    "in": "path",
+                    "description": "Seat serial number",
+                    "name": "serial",
+                    "required": true,
+                    "type": "string"
+                }
+            ],
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "summary": "Get all recordings from a specific seat",
+                "operationId": "get_seat_recordings",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "in": "query",
+                        "description": "Items per page",
+                        "name": "per_page"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "in": "query",
+                        "description": "Page number",
+                        "name": "page"
+                    }
+                ],
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "seats"
+                ]
+            }
+        },
+        "/api/stats/age-distribution": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/AgeDistribution"
+                            }
+                        }
+                    }
+                },
+                "summary": "Get user age distribution",
+                "operationId": "get_age_distribution",
+                "parameters": [
+                    {
+                        "name": "X-Fields",
+                        "in": "header",
+                        "type": "string",
+                        "format": "mask",
+                        "description": "An optional fields mask"
+                    }
+                ],
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "stats"
+                ]
+            }
+        },
+        "/api/stats/duration-analysis": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/DurationStats"
+                        }
+                    }
+                },
+                "summary": "Analyze sit duration patterns (including phone distraction patterns)",
+                "operationId": "get_duration_analysis",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 30,
+                        "in": "query",
+                        "description": "Days to analyze",
+                        "name": "days"
+                    },
+                    {
+                        "name": "X-Fields",
+                        "in": "header",
+                        "type": "string",
+                        "format": "mask",
+                        "description": "An optional fields mask"
+                    }
+                ],
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "stats"
+                ]
+            }
+        },
+        "/api/stats/health-overview": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/HealthOverview"
+                        }
+                    }
+                },
+                "summary": "Get population health overview",
+                "operationId": "get_health_overview",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 30,
+                        "in": "query",
+                        "description": "Days to analyze",
+                        "name": "days"
+                    },
+                    {
+                        "name": "X-Fields",
+                        "in": "header",
+                        "type": "string",
+                        "format": "mask",
+                        "description": "An optional fields mask"
+                    }
+                ],
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "stats"
+                ]
+            }
+        },
+        "/api/stats/hourly-usage": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "summary": "Get bathroom usage patterns by hour of day",
+                "operationId": "get_hourly_usage",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 7,
+                        "in": "query",
+                        "description": "Days to analyze",
+                        "name": "days"
+                    }
+                ],
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "stats"
+                ]
+            }
+        },
+        "/api/stats/overview": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/Overview"
+                        }
+                    }
+                },
+                "summary": "Get system overview statistics",
+                "operationId": "get_overview",
+                "parameters": [
+                    {
+                        "name": "X-Fields",
+                        "in": "header",
+                        "type": "string",
+                        "format": "mask",
+                        "description": "An optional fields mask"
+                    }
+                ],
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "stats"
+                ]
+            }
+        },
+        "/api/users/": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/UserList"
+                        }
+                    }
+                },
+                "summary": "List all users with pagination and filters",
+                "operationId": "list_users",
+                "parameters": [
+                    {
+                        "type": "boolean",
+                        "in": "query",
+                        "description": "Filter users with health trends",
+                        "name": "has_trend"
+                    },
+                    {
+                        "in": "query",
+                        "description": "Gender filter",
+                        "name": "gender",
+                        "type": "string"
+                    },
+                    {
+                        "type": "integer",
+                        "in": "query",
+                        "description": "Maximum age filter",
+                        "name": "age_max"
+                    },
+                    {
+                        "type": "integer",
+                        "in": "query",
+                        "description": "Minimum age filter",
+                        "name": "age_min"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "in": "query",
+                        "description": "Items per page",
+                        "name": "per_page"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "in": "query",
+                        "description": "Page number",
+                        "name": "page"
+                    },
+                    {
+                        "name": "X-Fields",
+                        "in": "header",
+                        "type": "string",
+                        "format": "mask",
+                        "description": "An optional fields mask"
+                    }
+                ],
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "users"
+                ]
+            }
+        },
+        "/api/users/{id}": {
+            "parameters": [
+                {
+                    "in": "path",
+                    "description": "User ID",
+                    "name": "id",
+                    "required": true,
+                    "type": "integer"
+                }
+            ],
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "$ref": "#/definitions/UserDetail"
+                        }
+                    }
+                },
+                "summary": "Get detailed user information",
+                "operationId": "get_user",
+                "parameters": [
+                    {
+                        "name": "X-Fields",
+                        "in": "header",
+                        "type": "string",
+                        "format": "mask",
+                        "description": "An optional fields mask"
+                    }
+                ],
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "users"
+                ]
+            }
+        },
+        "/api/users/{id}/recordings": {
+            "parameters": [
+                {
+                    "in": "path",
+                    "description": "User ID",
+                    "name": "id",
+                    "required": true,
+                    "type": "integer"
+                }
+            ],
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "summary": "Get user's recordings with pagination",
+                "operationId": "get_user_recordings",
+                "parameters": [
+                    {
+                        "type": "boolean",
+                        "default": false,
+                        "in": "query",
+                        "description": "Include ECG trace data",
+                        "name": "include_ecg"
+                    },
+                    {
+                        "in": "query",
+                        "description": "End date filter (ISO format)",
+                        "name": "end_date",
+                        "type": "string"
+                    },
+                    {
+                        "in": "query",
+                        "description": "Start date filter (ISO format)",
+                        "name": "start_date",
+                        "type": "string"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "in": "query",
+                        "description": "Items per page",
+                        "name": "per_page"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "in": "query",
+                        "description": "Page number",
+                        "name": "page"
+                    }
+                ],
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "users"
+                ]
+            }
+        },
+        "/api/users/{id}/trends": {
+            "parameters": [
+                {
+                    "in": "path",
+                    "description": "User ID",
+                    "name": "id",
+                    "required": true,
+                    "type": "integer"
+                }
+            ],
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/HealthTrend"
+                            }
+                        }
+                    }
+                },
+                "summary": "Get health trends over time for a user",
+                "operationId": "get_user_trends",
+                "parameters": [
+                    {
+                        "default": "day",
+                        "in": "query",
+                        "description": "Group by: day, week, month",
+                        "name": "group_by",
+                        "type": "string"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 30,
+                        "in": "query",
+                        "description": "Number of days to analyze",
+                        "name": "days"
+                    },
+                    {
+                        "name": "X-Fields",
+                        "in": "header",
+                        "type": "string",
+                        "format": "mask",
+                        "description": "An optional fields mask"
+                    }
+                ],
+                "security": [
+                    {
+                        "apikey": []
+                    }
+                ],
+                "tags": [
+                    "users"
+                ]
+            }
+        }
+    },
+    "info": {
+        "title": "Casana Smart Toilet Seat API",
+        "version": "1.0",
+        "description": "\n## About This API\n\nThe Casana Smart Toilet Seat is a health monitoring device that passively collects vital signs every time someone sits down. This API provides access to **synthetic but realistic test data** for building user interfaces and integrations.\n\n**Base URL:** `https://casana.mcchord.net/api`\n\n---\n\n## Quick Start\n\n```bash\n# 1. Get system overview\ncurl -H \"X-API-Key: dev-key-12345\" https://casana.mcchord.net/api/stats/overview\n\n# 2. List users\ncurl -H \"X-API-Key: dev-key-12345\" https://casana.mcchord.net/api/users/\n\n# 3. Get a user's health trends\ncurl -H \"X-API-Key: dev-key-12345\" \"https://casana.mcchord.net/api/users/1/trends?days=30\"\n\n# 4. Get recordings with alerts\ncurl -H \"X-API-Key: dev-key-12345\" https://casana.mcchord.net/api/recordings/alerts\n```\n\n---\n\n## Authentication\n\nAll endpoints require the `X-API-Key` header.\n\n| API Key | Role | Access Level |\n|---------|------|--------------|\n| `dev-key-12345` | Admin | Full access, can trigger data generation |\n| `test-key-67890` | Read-only | Can read all data |\n| `mobile-app-key` | User | Standard user access |\n| `care-provider-key` | Provider | Care provider portal access |\n\n---\n\n## Data Model\n\n### Entity Relationships\n\n```\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502                           DATA MODEL OVERVIEW                           \u2502\n\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n\u2502                                                                         \u2502\n\u2502  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510         \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510         \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510             \u2502\n\u2502  \u2502  USER    \u2502\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u25b6\u2502   SEAT   \u2502\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u25b6\u2502  RECORDING  \u2502\u2500\u2500\u2500\u2500\u2500\u2510       \u2502\n\u2502  \u2502          \u2502  owns   \u2502          \u2502 creates \u2502  (health    \u2502     \u2502       \u2502\n\u2502  \u2502 - name   \u2502         \u2502 - serial \u2502         \u2502   data)     \u2502     \u2502       \u2502\n\u2502  \u2502 - age    \u2502         \u2502 - firmware\u2502        \u2502             \u2502     \u2502       \u2502\n\u2502  \u2502 - bio_id \u2502         \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518         \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518     \u2502       \u2502\n\u2502  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518              \u2502                     \u2502             \u2502       \u2502\n\u2502       \u2502                    \u2502                     \u2502             \u25bc       \u2502\n\u2502       \u2502                    \u25bc                     \u2502       \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510   \u2502\n\u2502       \u2502              \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510            \u2502       \u2502 ALERT   \u2502   \u2502\n\u2502       \u2502              \u2502 SEAT_METADATA\u2502            \u2502       \u2502(clinical)\u2502  \u2502\n\u2502       \u2502              \u2502 (connectivity)\u2502           \u2502       \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518   \u2502\n\u2502       \u2502              \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518            \u2502                     \u2502\n\u2502       \u2502                                          \u2502                     \u2502\n\u2502       \u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510          \u2502\n\u2502       \u2502                                \u2502         \u2502          \u2502          \u2502\n\u2502       \u25bc                                \u25bc         \u25bc          \u25bc          \u2502\n\u2502  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510                   \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510 \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2510 \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510  \u2502\n\u2502  \u2502 MONITOR  \u2502                   \u2502CARE_PROVIDER \u2502 \u2502 NOTE \u2502 \u2502FOLLOWUP \u2502  \u2502\n\u2502  \u2502 (family) \u2502                   \u2502  (medical)   \u2502 \u2502      \u2502 \u2502         \u2502  \u2502\n\u2502  \u2502          \u2502                   \u2502              \u2502 \u2502      \u2502 \u2502         \u2502  \u2502\n\u2502  \u2502 watches  \u2502                   \u2502   manages    \u2502 \u2502patient\u2502 \u2502scheduled\u2502  \u2502\n\u2502  \u2502 up to 5  \u2502                   \u2502    many      \u2502 \u2502 notes \u2502 \u2502  tasks  \u2502  \u2502\n\u2502  \u2502  users   \u2502                   \u2502   patients   \u2502 \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2518 \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518  \u2502\n\u2502  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518                   \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518                       \u2502\n\u2502                                                                         \u2502\n\u2502           \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510            \u2502\n\u2502           \u2502        ENTITY_METADATA (custom JSON)          \u2502            \u2502\n\u2502           \u2502  Attach arbitrary data to any entity above    \u2502            \u2502\n\u2502           \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518            \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n```\n\n### Core Entities\n\n| Entity | Description | Key Fields |\n|--------|-------------|------------|\n| **User** | A person using the smart toilet | `id`, `name`, `age`, `gender`, `bio_id`, `email` |\n| **Seat** | A physical toilet seat device | `serial_number`, `owner_user_id`, `firmware_version` |\n| **Recording** | Health data from one sit session | `user_id`, `sit_time`, `duration`, vitals, `ecg_trace` |\n| **SeatMetadata** | Device connectivity check-ins | `seat_serial`, `battery_voltage`, `connect_time` |\n| **Monitor** | Family member watching a user | `name`, `email`, can watch up to 5 users |\n| **CareProvider** | Medical practice | `name`, `practice_name`, manages many patients |\n\n### Clinical Workflow Entities (NEW)\n\n| Entity | Description | Key Fields |\n|--------|-------------|------------|\n| **Alert** | Clinical alerts from recordings | `recording_id`, `alert_type`, `severity`, `status` |\n| **Note** | Patient notes by clinicians | `user_id`, `content`, `author`, `note_type` |\n| **Followup** | Scheduled follow-up tasks | `user_id`, `due_date`, `status`, `assigned_to` |\n| **EntityMetadata** | Custom JSON on any entity | `entity_type`, `entity_id`, `key`, `data` |\n\n### Relationship Details\n\n| Relationship | Cardinality | Description |\n|--------------|-------------|-------------|\n| User \u2192 Seat | 1:1 | Each user owns one seat |\n| User \u2192 Recording | 1:Many | Users have many recordings over time |\n| Seat \u2192 Recording | 1:Many | Recordings are linked to the seat used |\n| Seat \u2192 SeatMetadata | 1:Many | Connectivity logs every 6 hours |\n| Monitor \u2192 User | Many:Many | Monitors can watch up to 5 users |\n| CareProvider \u2192 User | 1:Many | Providers manage patient populations |\n| Recording \u2192 Alert | 1:Many | Alerts generated from abnormal readings |\n| User \u2192 Note | 1:Many | Clinician notes about patients |\n| User \u2192 Followup | 1:Many | Scheduled tasks for patients |\n| Any Entity \u2192 Metadata | 1:Many | Custom JSON data attached to entities |\n\n---\n\n## Health Data Collected\n\n### Per Recording (Each Sit)\n\n| Field | Type | Description | Example |\n|-------|------|-------------|---------|\n| `sit_time` | datetime | When the user sat down | `2025-01-11T08:30:00` |\n| `duration_seconds` | int | How long they sat | `342` (5.7 min) |\n| `heart_rate` | int | Beats per minute | `72` |\n| `hrv` | float | Heart rate variability (ms) | `45.2` |\n| `bp_systolic` | int | Systolic blood pressure | `128` |\n| `bp_diastolic` | int | Diastolic blood pressure | `82` |\n| `blood_oxygenation` | float | SpO2 percentage | `97.5` |\n| `seated_weight` | float | ~60% of body weight (kg) | `48.3` |\n| `agility_score` | float | Ease of standing (0-100) | `75.0` |\n| `htn` | bool | Hypertensive reading? | `false` |\n| `ecg_trace` | array | 1000 points (100Hz \u00d7 10sec) | `[0.1, 0.2, ...]` |\n| `bio_id` | string | Biometric identifier | `BIO-ABC123` |\n\n### Seat Metadata (Every 6 Hours)\n\n| Field | Type | Description |\n|-------|------|-------------|\n| `connect_time` | datetime | Check-in timestamp |\n| `battery_voltage` | float | Battery level (3.3V-4.2V) |\n| `ssid` | string | WiFi network name |\n| `local_ip` | string | Device IP on local network |\n| `remote_ip` | string | Public IP address |\n\n---\n\n## Test Data Characteristics\n\n### Population: 500 Users\n\n| Age Group | % of Users | Health Profile |\n|-----------|------------|----------------|\n| 20-40 | 15% | Generally healthy, high agility |\n| 40-60 | 25% | Some BP variation, good agility |\n| 60-75 | 35% | Higher BP, lower agility |\n| 75-90 | 25% | Highest HTN risk, lowest agility |\n\n### 3 Months of Historical Data\n\n- **~340,000 recordings** total\n- **~680 recordings per user** (7-8 bathroom visits/day)\n- **182,000 seat metadata entries** (4 check-ins/day)\n\n### Health Trends (8% of Users)\n\n38 users have health that changes over time:\n- **Improving**: Vitals trending toward healthier ranges\n- **Deteriorating**: Vitals trending toward concerning ranges\n- **Duration**: Trends last 1-6 months\n\n### Sit Duration Patterns\n\nSeniors spend more time seated (phone distraction modeling):\n\n| Age Group | Average Sit | Extended Sits (20+ min) |\n|-----------|-------------|------------------------|\n| 20-40 | 4.6 min | 0% |\n| 40-60 | 7.9 min | 11% |\n| 60-75 | 14.9 min | 38% |\n| **75-90** | **23.8 min** | **51%** |\n\n### Daily Usage Patterns\n\n```\nBathroom Usage by Hour\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n 6 AM  \u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588  Peak (morning)\n 7 AM  \u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588  Highest\n 8 AM  \u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\n12 PM  \u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588  Midday\n 6 PM  \u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588  Evening peak\n10 PM  \u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\n 2 AM  \u2588\u2588  (seniors more active at night)\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n```\n\n---\n\n## Common API Patterns\n\n### Pagination\n\nAll list endpoints support pagination:\n\n```\nGET /api/users/?page=1&per_page=20\n```\n\nResponse includes:\n```json\n{\n  \"users\": [...],\n  \"pagination\": {\n    \"page\": 1,\n    \"per_page\": 20,\n    \"total\": 500,\n    \"pages\": 25\n  }\n}\n```\n\n### Date Filtering\n\nRecording endpoints support date filters:\n\n```\nGET /api/recordings/?start_date=2025-01-01&end_date=2025-01-31\nGET /api/users/1/recordings?start_date=2025-01-01\n```\n\n### Include/Exclude Options\n\nECG data is large (1000 points). Include only when needed:\n\n```\nGET /api/recordings/1          # Includes ECG\nGET /api/users/1/recordings    # Excludes ECG by default\nGET /api/users/1/recordings?include_ecg=true\n```\n\n---\n\n## Endpoint Categories\n\n| Category | Base Path | Description |\n|----------|-----------|-------------|\n| **Users** | `/api/users/` | User profiles, recordings, trends |\n| **Seats** | `/api/seats/` | Device info, metadata, recordings |\n| **Recordings** | `/api/recordings/` | Health data, alerts, extended sits |\n| **Monitors** | `/api/monitors/` | Family member access |\n| **Care Providers** | `/api/care-providers/` | Medical practice management |\n| **Stats** | `/api/stats/` | Analytics and population health |\n| **Clinical** | `/api/clinical/` | **NEW** - Alerts, notes, follow-ups |\n| **Metadata** | `/api/metadata/` | **NEW** - Custom JSON storage |\n\n---\n\n## NEW: Clinical Workflow Features\n\n### Alert Management (`/api/clinical/alerts`)\n\nClinicians can acknowledge and resolve alerts:\n\n```bash\n# List active alerts\nGET /api/clinical/alerts?status=active\n\n# Acknowledge an alert\nPOST /api/clinical/alerts/123/acknowledge\n{\"acknowledged_by\": \"Dr. Smith\"}\n\n# Resolve an alert\nPOST /api/clinical/alerts/123/resolve\n{\"resolved_by\": \"Dr. Smith\", \"resolution_notes\": \"Patient contacted, BP medication adjusted\"}\n\n# Dismiss a false positive\nPOST /api/clinical/alerts/123/dismiss\n{\"dismissed_by\": \"Dr. Smith\", \"reason\": \"Sensor error\"}\n```\n\n**Alert statuses:** `active` \u2192 `acknowledged` \u2192 `resolved` (or `dismissed`)\n\n### Patient Notes (`/api/clinical/notes`)\n\nCreate and manage patient notes:\n\n```bash\n# Create a note\nPOST /api/clinical/notes\n{\n  \"user_id\": 42,\n  \"title\": \"Follow-up call\",\n  \"content\": \"Discussed BP readings. Patient reports...\",\n  \"note_type\": \"clinical\",\n  \"author\": \"Dr. Smith\",\n  \"author_role\": \"physician\"\n}\n\n# List notes for a patient\nGET /api/clinical/notes?user_id=42\n\n# Note types: general, clinical, care_plan, observation\n```\n\n### Follow-ups (`/api/clinical/followups`)\n\nSchedule and track follow-up tasks:\n\n```bash\n# Create a follow-up\nPOST /api/clinical/followups\n{\n  \"user_id\": 42,\n  \"title\": \"30-day BP check\",\n  \"followup_type\": \"review\",\n  \"priority\": \"high\",\n  \"assigned_to\": \"Nurse Johnson\",\n  \"due_date\": \"2026-02-15T09:00:00Z\"\n}\n\n# List overdue follow-ups\nGET /api/clinical/followups/overdue\n\n# Complete a follow-up\nPOST /api/clinical/followups/123/complete\n{\"completed_by\": \"Nurse Johnson\", \"completion_notes\": \"BP improved\"}\n```\n\n**Follow-up types:** `call`, `visit`, `review`, `test`, `medication`\n**Priorities:** `low`, `normal`, `high`, `urgent`\n\n---\n\n## NEW: Custom Metadata Storage\n\nStore arbitrary JSON data on any entity:\n\n```bash\n# Set metadata on a user\nPUT /api/metadata/user/42/preferences\n{\n  \"data\": {\"theme\": \"dark\", \"notifications\": true},\n  \"created_by\": \"Mobile App\"\n}\n\n# Get all metadata for a user\nGET /api/metadata/user/42\n\n# Set metadata on a seat\nPUT /api/metadata/seat/CSN-00042-1234/installation\n{\n  \"data\": {\"installed_date\": \"2025-06-15\", \"installer\": \"Tech Support\"}\n}\n\n# Bulk set multiple keys\nPUT /api/metadata/user/42\n{\n  \"metadata\": {\n    \"preferences\": {\"theme\": \"dark\"},\n    \"tags\": [\"high-risk\", \"medication-review\"]\n  }\n}\n```\n\n**Supported entities:** `user`, `seat`, `recording`, `monitor`, `care_provider`\n\n---\n\n## Key Endpoints for UI Development\n\n| Use Case | Endpoint | Description |\n|----------|----------|-------------|\n| User dashboard | `GET /api/users/{id}/trends` | Health trends over time |\n| Latest vitals | `GET /api/users/{id}/recordings?per_page=1` | Most recent recording |\n| Alert monitoring | `GET /api/recordings/alerts` | Concerning readings |\n| Extended sits | `GET /api/recordings/extended` | Long bathroom visits |\n| Population health | `GET /api/care-providers/{id}/population-stats` | Aggregate statistics |\n| Usage patterns | `GET /api/stats/hourly-usage` | When people use bathroom |\n\n---\n\n## Additional Resources\n\n- **OpenAPI Spec**: [/api/openapi.json](/api/openapi.json)\n- **Health Check**: [/health](/health)\n- **Cron Setup**: See `CRON_SETUP.md` in the repository\n\n---\n\n*This is a test API with synthetic data for UI/UX development. Data patterns are designed to be realistic for building healthcare monitoring interfaces.*\n"
+    },
+    "produces": [
+        "application/json"
+    ],
+    "consumes": [
+        "application/json"
+    ],
+    "securityDefinitions": {
+        "apikey": {
+            "type": "apiKey",
+            "in": "header",
+            "name": "X-API-Key",
+            "description": "API key for authentication. See the Authentication section below for available test keys."
+        }
+    },
+    "security": [
+        {
+            "apikey": []
+        }
+    ],
+    "tags": [
+        {
+            "name": "users",
+            "description": "\nUser management and health data access.\n\n**Key endpoints:**\n- `GET /` - List all users with filtering\n- `GET /{id}` - Get user details\n- `GET /{id}/recordings` - User's health recordings\n- `GET /{id}/trends` - Aggregated health trends over time\n"
+        },
+        {
+            "name": "seats",
+            "description": "\nSmart toilet seat device management.\n\n**Key endpoints:**\n- `GET /` - List all seats\n- `GET /{serial}` - Get seat details with owner info\n- `GET /{serial}/metadata` - Connectivity history (battery, WiFi, etc.)\n- `GET /{serial}/recordings` - All recordings from this seat\n"
+        },
+        {
+            "name": "recordings",
+            "description": "\nHealth recordings from sit sessions.\n\n**Key endpoints:**\n- `GET /` - List recordings with filters (date, user, HTN, duration)\n- `GET /{id}` - Single recording with full ECG trace\n- `GET /alerts` - Recordings that may need attention (HTN, low SpO2, extended sits)\n- `GET /extended` - Long bathroom visits (potential concern for seniors)\n"
+        },
+        {
+            "name": "monitors",
+            "description": "\nFamily member monitoring access.\n\nMonitors are family members who can view a user's health data. Each monitor can watch up to 5 users, and data sharing is configurable (which metrics are visible).\n\n**Key endpoints:**\n- `GET /` - List all monitors\n- `GET /{id}` - Monitor details with list of users they watch\n- `GET /{id}/users/{user_id}/data` - Get permitted health data for a monitored user\n"
+        },
+        {
+            "name": "care-providers",
+            "description": "\nMedical practice and care provider management.\n\nCare providers are medical practices that monitor patient populations. They have access to all health data for their patients and can view aggregate statistics.\n\n**Key endpoints:**\n- `GET /` - List all care provider practices\n- `GET /{id}` - Provider details with patient list\n- `GET /{id}/patients/{user_id}` - Detailed patient health summary\n- `GET /{id}/population-stats` - Aggregate statistics for all patients\n"
+        },
+        {
+            "name": "stats",
+            "description": "\nSystem-wide statistics and analytics.\n\n**Key endpoints:**\n- `GET /overview` - System totals (users, recordings, active today)\n- `GET /age-distribution` - User demographics breakdown\n- `GET /health-overview` - Population health metrics\n- `GET /duration-analysis` - Sit duration patterns by age (phone distraction data)\n- `GET /hourly-usage` - Bathroom usage by time of day\n"
+        },
+        {
+            "name": "clinical",
+            "description": "\nClinical workflow management for care teams.\n\n**Features:**\n- **Alerts**: Acknowledge and resolve clinical alerts\n- **Notes**: Create and manage patient notes\n- **Follow-ups**: Schedule and track follow-up tasks\n\nAll endpoints require authentication via `X-API-Key` header.\n"
+        },
+        {
+            "name": "metadata",
+            "description": "\nStore and retrieve arbitrary JSON metadata on any entity.\n\n**Supported entity types:**\n- `user` - Patient/user records\n- `seat` - Toilet seat devices\n- `recording` - Health recordings\n- `monitor` - Family monitors\n- `care_provider` - Medical practices\n\n**Use cases:**\n- Store UI preferences\n- Add custom fields\n- Track integration data\n- Store application-specific state\n"
+        }
+    ],
+    "definitions": {
+        "UserList": {
+            "properties": {
+                "users": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/User"
+                    }
+                },
+                "pagination": {
+                    "$ref": "#/definitions/Pagination"
+                }
+            },
+            "type": "object"
+        },
+        "User": {
+            "properties": {
+                "id": {
+                    "type": "integer",
+                    "description": "User ID"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Full name"
+                },
+                "age": {
+                    "type": "integer",
+                    "description": "Age in years"
+                },
+                "gender": {
+                    "type": "string",
+                    "description": "Gender"
+                },
+                "email": {
+                    "type": "string",
+                    "description": "Email address"
+                },
+                "cell_phone": {
+                    "type": "string",
+                    "description": "Cell phone number"
+                },
+                "bio_id": {
+                    "type": "string",
+                    "description": "Biometric identifier"
+                },
+                "created_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Account creation date"
+                }
+            },
+            "type": "object"
+        },
+        "Pagination": {
+            "properties": {
+                "page": {
+                    "type": "integer",
+                    "description": "Current page"
+                },
+                "per_page": {
+                    "type": "integer",
+                    "description": "Items per page"
+                },
+                "total": {
+                    "type": "integer",
+                    "description": "Total items"
+                },
+                "pages": {
+                    "type": "integer",
+                    "description": "Total pages"
+                }
+            },
+            "type": "object"
+        },
+        "UserDetail": {
+            "allOf": [
+                {
+                    "$ref": "#/definitions/User"
+                },
+                {
+                    "properties": {
+                        "seats": {
+                            "type": "array",
+                            "description": "Seat serial numbers",
+                            "items": {
+                                "type": "string"
+                            }
+                        },
+                        "total_recordings": {
+                            "type": "integer",
+                            "description": "Total number of recordings"
+                        },
+                        "has_monitor": {
+                            "type": "boolean",
+                            "description": "Has family monitor"
+                        },
+                        "has_care_provider": {
+                            "type": "boolean",
+                            "description": "Has care provider"
+                        }
+                    },
+                    "type": "object"
+                }
+            ]
+        },
+        "HealthTrend": {
+            "properties": {
+                "date": {
+                    "type": "string",
+                    "description": "Date"
+                },
+                "avg_heart_rate": {
+                    "type": "number",
+                    "description": "Average heart rate"
+                },
+                "avg_bp_systolic": {
+                    "type": "number",
+                    "description": "Average systolic BP"
+                },
+                "avg_bp_diastolic": {
+                    "type": "number",
+                    "description": "Average diastolic BP"
+                },
+                "avg_blood_oxygenation": {
+                    "type": "number",
+                    "description": "Average SpO2"
+                },
+                "avg_agility_score": {
+                    "type": "number",
+                    "description": "Average agility score"
+                },
+                "htn_percentage": {
+                    "type": "number",
+                    "description": "Percentage of HTN readings"
+                },
+                "recording_count": {
+                    "type": "integer",
+                    "description": "Number of recordings"
+                }
+            },
+            "type": "object"
+        },
+        "SeatDetail": {
+            "allOf": [
+                {
+                    "$ref": "#/definitions/Seat"
+                },
+                {
+                    "properties": {
+                        "owner_name": {
+                            "type": "string",
+                            "description": "Owner name"
+                        },
+                        "total_recordings": {
+                            "type": "integer",
+                            "description": "Total recordings"
+                        },
+                        "last_used": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "Last recording time"
+                        },
+                        "last_connection": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "Last connectivity check"
+                        },
+                        "battery_voltage": {
+                            "type": "number",
+                            "description": "Latest battery voltage"
+                        }
+                    },
+                    "type": "object"
+                }
+            ]
+        },
+        "Seat": {
+            "properties": {
+                "serial_number": {
+                    "type": "string",
+                    "description": "Seat serial number"
+                },
+                "owner_user_id": {
+                    "type": "integer",
+                    "description": "Owner user ID"
+                },
+                "firmware_version": {
+                    "type": "string",
+                    "description": "Firmware version"
+                },
+                "created_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Registration date"
+                }
+            },
+            "type": "object"
+        },
+        "RecordingDetail": {
+            "allOf": [
+                {
+                    "$ref": "#/definitions/Recording"
+                },
+                {
+                    "properties": {
+                        "ecg_trace": {
+                            "type": "array",
+                            "description": "ECG trace (1000 points)",
+                            "items": {
+                                "type": "number"
+                            }
+                        },
+                        "user_name": {
+                            "type": "string",
+                            "description": "User name"
+                        },
+                        "user_age": {
+                            "type": "integer",
+                            "description": "User age"
+                        }
+                    },
+                    "type": "object"
+                }
+            ]
+        },
+        "Recording": {
+            "properties": {
+                "id": {
+                    "type": "integer",
+                    "description": "Recording ID"
+                },
+                "seat_serial": {
+                    "type": "string",
+                    "description": "Seat serial number"
+                },
+                "user_id": {
+                    "type": "integer",
+                    "description": "User ID"
+                },
+                "bio_id": {
+                    "type": "string",
+                    "description": "Biometric identifier"
+                },
+                "sit_time": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Time of sit"
+                },
+                "duration_seconds": {
+                    "type": "integer",
+                    "description": "Duration in seconds"
+                },
+                "seated_weight": {
+                    "type": "number",
+                    "description": "Seated weight (kg)"
+                },
+                "heart_rate": {
+                    "type": "integer",
+                    "description": "Heart rate (bpm)"
+                },
+                "hrv": {
+                    "type": "number",
+                    "description": "Heart rate variability (ms)"
+                },
+                "blood_oxygenation": {
+                    "type": "number",
+                    "description": "Blood oxygen saturation (%)"
+                },
+                "bp_systolic": {
+                    "type": "integer",
+                    "description": "Systolic blood pressure (mmHg)"
+                },
+                "bp_diastolic": {
+                    "type": "integer",
+                    "description": "Diastolic blood pressure (mmHg)"
+                },
+                "htn": {
+                    "type": "boolean",
+                    "description": "Hypertensive reading"
+                },
+                "agility_score": {
+                    "type": "number",
+                    "description": "Agility score (0-100)"
+                }
+            },
+            "type": "object"
+        },
+        "MonitorDetail": {
+            "allOf": [
+                {
+                    "$ref": "#/definitions/Monitor"
+                },
+                {
+                    "properties": {
+                        "monitored_users": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/MonitoredUser"
+                            }
+                        },
+                        "total_monitored": {
+                            "type": "integer",
+                            "description": "Total users monitored"
+                        }
+                    },
+                    "type": "object"
+                }
+            ]
+        },
+        "Monitor": {
+            "properties": {
+                "id": {
+                    "type": "integer",
+                    "description": "Monitor ID"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Monitor name"
+                },
+                "email": {
+                    "type": "string",
+                    "description": "Email address"
+                },
+                "cell_phone": {
+                    "type": "string",
+                    "description": "Cell phone number"
+                },
+                "created_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Account creation date"
+                }
+            },
+            "type": "object"
+        },
+        "MonitoredUser": {
+            "properties": {
+                "user_id": {
+                    "type": "integer",
+                    "description": "User ID"
+                },
+                "user_name": {
+                    "type": "string",
+                    "description": "User name"
+                },
+                "user_age": {
+                    "type": "integer",
+                    "description": "User age"
+                },
+                "shared_data_types": {
+                    "type": "array",
+                    "description": "Data types shared",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "relationship_id": {
+                    "type": "integer",
+                    "description": "Relationship ID"
+                }
+            },
+            "type": "object"
+        },
+        "CareProviderDetail": {
+            "allOf": [
+                {
+                    "$ref": "#/definitions/CareProvider"
+                },
+                {
+                    "properties": {
+                        "patients": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/PatientSummary"
+                            }
+                        },
+                        "total_patients": {
+                            "type": "integer",
+                            "description": "Total patients"
+                        }
+                    },
+                    "type": "object"
+                }
+            ]
+        },
+        "CareProvider": {
+            "properties": {
+                "id": {
+                    "type": "integer",
+                    "description": "Provider ID"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Provider name"
+                },
+                "practice_name": {
+                    "type": "string",
+                    "description": "Practice name"
+                },
+                "email": {
+                    "type": "string",
+                    "description": "Email address"
+                },
+                "phone": {
+                    "type": "string",
+                    "description": "Phone number"
+                },
+                "created_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Account creation date"
+                }
+            },
+            "type": "object"
+        },
+        "PatientSummary": {
+            "properties": {
+                "user_id": {
+                    "type": "integer",
+                    "description": "User ID"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Patient name"
+                },
+                "age": {
+                    "type": "integer",
+                    "description": "Patient age"
+                },
+                "gender": {
+                    "type": "string",
+                    "description": "Patient gender"
+                },
+                "total_recordings": {
+                    "type": "integer",
+                    "description": "Total recordings"
+                },
+                "last_recording": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Last recording time"
+                },
+                "has_health_trend": {
+                    "type": "boolean",
+                    "description": "Has active health trend"
+                },
+                "trend_type": {
+                    "type": "string",
+                    "description": "Health trend type"
+                }
+            },
+            "type": "object"
+        },
+        "PopulationStats": {
+            "properties": {
+                "total_patients": {
+                    "type": "integer",
+                    "description": "Total patients"
+                },
+                "avg_age": {
+                    "type": "number",
+                    "description": "Average age"
+                },
+                "gender_distribution": {
+                    "type": "object",
+                    "description": "Gender breakdown"
+                },
+                "htn_rate": {
+                    "type": "number",
+                    "description": "HTN rate (%)"
+                },
+                "avg_recordings_per_patient": {
+                    "type": "number",
+                    "description": "Avg recordings per patient"
+                },
+                "patients_with_trends": {
+                    "type": "integer",
+                    "description": "Patients with health trends"
+                },
+                "trend_breakdown": {
+                    "type": "object",
+                    "description": "Trend type breakdown"
+                }
+            },
+            "type": "object"
+        },
+        "Overview": {
+            "properties": {
+                "total_users": {
+                    "type": "integer",
+                    "description": "Total users"
+                },
+                "total_seats": {
+                    "type": "integer",
+                    "description": "Total seats"
+                },
+                "total_recordings": {
+                    "type": "integer",
+                    "description": "Total recordings"
+                },
+                "total_monitors": {
+                    "type": "integer",
+                    "description": "Total monitors"
+                },
+                "total_care_providers": {
+                    "type": "integer",
+                    "description": "Total care providers"
+                },
+                "recordings_today": {
+                    "type": "integer",
+                    "description": "Recordings today"
+                },
+                "active_users_today": {
+                    "type": "integer",
+                    "description": "Active users today"
+                }
+            },
+            "type": "object"
+        },
+        "AgeDistribution": {
+            "properties": {
+                "age_group": {
+                    "type": "string",
+                    "description": "Age group range"
+                },
+                "count": {
+                    "type": "integer",
+                    "description": "Number of users"
+                },
+                "percentage": {
+                    "type": "number",
+                    "description": "Percentage of total"
+                }
+            },
+            "type": "object"
+        },
+        "HealthOverview": {
+            "properties": {
+                "htn_rate": {
+                    "type": "number",
+                    "description": "Overall HTN rate (%)"
+                },
+                "avg_heart_rate": {
+                    "type": "number",
+                    "description": "Average heart rate"
+                },
+                "avg_blood_oxygenation": {
+                    "type": "number",
+                    "description": "Average SpO2"
+                },
+                "avg_agility_score": {
+                    "type": "number",
+                    "description": "Average agility score"
+                },
+                "users_with_improving_trends": {
+                    "type": "integer",
+                    "description": "Users improving"
+                },
+                "users_with_deteriorating_trends": {
+                    "type": "integer",
+                    "description": "Users deteriorating"
+                },
+                "users_stable": {
+                    "type": "integer",
+                    "description": "Users stable"
+                }
+            },
+            "type": "object"
+        },
+        "DurationStats": {
+            "properties": {
+                "avg_duration_seconds": {
+                    "type": "number",
+                    "description": "Average sit duration"
+                },
+                "extended_sits_percentage": {
+                    "type": "number",
+                    "description": "% of sits over 20 min"
+                },
+                "very_long_sits_percentage": {
+                    "type": "number",
+                    "description": "% of sits over 30 min"
+                },
+                "by_age_group": {
+                    "type": "object",
+                    "description": "Duration stats by age group"
+                }
+            },
+            "type": "object"
+        },
+        "AlertCreate": {
+            "required": [
+                "alert_type",
+                "recording_id",
+                "severity"
+            ],
+            "properties": {
+                "recording_id": {
+                    "type": "integer",
+                    "description": "Recording that triggered alert"
+                },
+                "alert_type": {
+                    "type": "string",
+                    "description": "Type: spo2, heart_rate, blood_pressure, extended_sit"
+                },
+                "severity": {
+                    "type": "string",
+                    "description": "Severity: critical, high"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Alert description"
+                }
+            },
+            "type": "object"
+        },
+        "AcknowledgeAlert": {
+            "required": [
+                "acknowledged_by"
+            ],
+            "properties": {
+                "acknowledged_by": {
+                    "type": "string",
+                    "description": "Name of person acknowledging"
+                }
+            },
+            "type": "object"
+        },
+        "ResolveAlert": {
+            "required": [
+                "resolved_by"
+            ],
+            "properties": {
+                "resolved_by": {
+                    "type": "string",
+                    "description": "Name of person resolving"
+                },
+                "resolution_notes": {
+                    "type": "string",
+                    "description": "Notes about resolution"
+                }
+            },
+            "type": "object"
+        },
+        "DismissAlert": {
+            "required": [
+                "dismissed_by"
+            ],
+            "properties": {
+                "dismissed_by": {
+                    "type": "string",
+                    "description": "Name of person dismissing"
+                },
+                "reason": {
+                    "type": "string",
+                    "description": "Reason for dismissal"
+                }
+            },
+            "type": "object"
+        },
+        "NoteCreate": {
+            "required": [
+                "author",
+                "content",
+                "user_id"
+            ],
+            "properties": {
+                "user_id": {
+                    "type": "integer",
+                    "description": "Patient ID"
+                },
+                "title": {
+                    "type": "string",
+                    "description": "Note title"
+                },
+                "content": {
+                    "type": "string",
+                    "description": "Note content"
+                },
+                "note_type": {
+                    "type": "string",
+                    "description": "Type: general, clinical, care_plan, observation"
+                },
+                "author": {
+                    "type": "string",
+                    "description": "Author name"
+                },
+                "author_role": {
+                    "type": "string",
+                    "description": "Author role"
+                },
+                "recording_id": {
+                    "type": "integer",
+                    "description": "Link to specific recording"
+                }
+            },
+            "type": "object"
+        },
+        "NoteUpdate": {
+            "properties": {
+                "title": {
+                    "type": "string",
+                    "description": "Note title"
+                },
+                "content": {
+                    "type": "string",
+                    "description": "Note content"
+                },
+                "note_type": {
+                    "type": "string",
+                    "description": "Type"
+                }
+            },
+            "type": "object"
+        },
+        "FollowupCreate": {
+            "required": [
+                "due_date",
+                "title",
+                "user_id"
+            ],
+            "properties": {
+                "user_id": {
+                    "type": "integer",
+                    "description": "Patient ID"
+                },
+                "title": {
+                    "type": "string",
+                    "description": "Follow-up title"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Description"
+                },
+                "followup_type": {
+                    "type": "string",
+                    "description": "Type: call, visit, review, test, medication"
+                },
+                "priority": {
+                    "type": "string",
+                    "description": "Priority: low, normal, high, urgent"
+                },
+                "assigned_to": {
+                    "type": "string",
+                    "description": "Assign to clinician"
+                },
+                "assigned_by": {
+                    "type": "string",
+                    "description": "Assigned by"
+                },
+                "due_date": {
+                    "type": "string",
+                    "description": "Due date (ISO format)"
+                },
+                "reminder_date": {
+                    "type": "string",
+                    "description": "Reminder date (ISO format)"
+                }
+            },
+            "type": "object"
+        },
+        "CompleteFollowup": {
+            "required": [
+                "completed_by"
+            ],
+            "properties": {
+                "completed_by": {
+                    "type": "string",
+                    "description": "Name of person completing"
+                },
+                "completion_notes": {
+                    "type": "string",
+                    "description": "Notes about completion"
+                }
+            },
+            "type": "object"
+        },
+        "MetadataSet": {
+            "required": [
+                "data"
+            ],
+            "properties": {
+                "data": {
+                    "type": "object",
+                    "description": "JSON data to store"
+                },
+                "created_by": {
+                    "type": "string",
+                    "description": "Who is setting this metadata"
+                }
+            },
+            "type": "object"
+        },
+        "BulkMetadataSet": {
+            "required": [
+                "metadata"
+            ],
+            "properties": {
+                "metadata": {
+                    "type": "object",
+                    "description": "Object with key-value pairs to set"
+                },
+                "created_by": {
+                    "type": "string",
+                    "description": "Who is setting this metadata"
+                }
+            },
+            "type": "object"
+        }
+    },
+    "responses": {
+        "ParseError": {
+            "description": "When a mask can't be parsed"
+        },
+        "MaskError": {
+            "description": "When any error occurs on mask"
+        }
+    }
+}

@@ -590,12 +590,31 @@
     height: 200px;
     background: var(--bg-secondary);
     border-radius: var(--radius-md);
+    position: relative;
+}
+
+/* Dark mode ECG background for better visibility */
+[data-theme="dark"] .ecg-viewer .ecg-canvas {
+    background: linear-gradient(180deg, #0d1015 0%, #121620 100%);
+    border: 1px solid var(--border-color);
 }
 
 .ecg-viewer .ecg-controls {
     display: flex;
-    gap: var(--spacing-md);
-    margin-top: var(--spacing-md);
+    gap: var(--spacing-sm);
+}
+
+.ecg-viewer .ecg-controls .btn {
+    min-width: 40px;
+}
+
+.ecg-zoom-hint {
+    opacity: 0.7;
+    transition: opacity var(--transition-fast);
+}
+
+.ecg-viewer:hover .ecg-zoom-hint {
+    opacity: 1;
 }
 
 /* ==========================================================================

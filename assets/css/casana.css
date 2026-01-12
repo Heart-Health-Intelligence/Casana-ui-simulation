@@ -519,6 +519,27 @@ a:hover {
     color: var(--casana-purple);
 }
 
+/* Dark mode soft badges with better contrast */
+[data-theme="dark"] .bg-success-soft {
+    background-color: rgba(52, 211, 153, 0.15);
+    color: #34D399;
+}
+
+[data-theme="dark"] .bg-warning-soft {
+    background-color: rgba(251, 191, 36, 0.15);
+    color: #FBBF24;
+}
+
+[data-theme="dark"] .bg-danger-soft {
+    background-color: rgba(248, 113, 113, 0.15);
+    color: #F87171;
+}
+
+[data-theme="dark"] .bg-info-soft {
+    background-color: rgba(106, 110, 255, 0.2);
+    color: #8A8EFF;
+}
+
 /* ==========================================================================
    Navigation
    ========================================================================== */

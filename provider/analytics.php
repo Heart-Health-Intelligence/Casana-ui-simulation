@@ -15,7 +15,8 @@ $populationStats = $api->getPopulationStats($providerId);
 $healthOverview = $api->getHealthOverview(30);
 $ageDistribution = $api->getAgeDistribution();
 $durationAnalysis = $api->getDurationAnalysis(30);
-$hourlyUsage = $api->getHourlyUsage(7);
+$hourlyUsageResponse = $api->getHourlyUsage(7);
+$hourlyUsage = isset($hourlyUsageResponse['hourly_usage']) ? $hourlyUsageResponse['hourly_usage'] : [];
 $alerts = $api->getAlertRecordings(['per_page' => 5, 'days' => 7]);
 
 // Page setup
@@ -338,7 +339,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 labels: labels,
                 datasets: [{
                     label: 'Recordings',
-                    data: hourlyUsage.map(h => h.count),
+                    data: hourlyUsage.map(h => h.recording_count),
                     backgroundColor: hourlyUsage.map(h => {
                         // Peak hours in purple, others in gray
                         if (h.hour >= 6 && h.hour <= 9) return colors.primary;

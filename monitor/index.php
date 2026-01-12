@@ -40,8 +40,8 @@ require_once __DIR__ . '/../includes/header.php';
         $statusMessage = 'is doing well';
         $statusClass = 'status-good';
         
-        if ($userData && isset($userData['latest_recording'])) {
-            $latest = $userData['latest_recording'];
+        if ($userData && isset($userData['data'])) {
+            $latest = $userData['data'];
             if (isset($latest['htn']) && $latest['htn']) {
                 $status = 'warning';
                 $statusMessage = 'needs attention';
@@ -68,8 +68,8 @@ require_once __DIR__ . '/../includes/header.php';
                     <?php echo $firstName; ?> <?php echo $statusMessage; ?>
                 </p>
                 
-                <?php if ($userData && isset($userData['latest_recording'])): ?>
-                <?php $latest = $userData['latest_recording']; ?>
+                <?php if ($userData && isset($userData['data'])): ?>
+                <?php $latest = $userData['data']; ?>
                 
                 <!-- Quick Vitals -->
                 <div class="row g-3 mb-4 text-start">
@@ -112,7 +112,7 @@ require_once __DIR__ . '/../includes/header.php';
                 
                 <p class="last-activity mb-0">
                     <i class="bi bi-clock me-1"></i>
-                    Last reading: <?php echo formatRelativeTime($latest['sit_time']); ?>
+                    Last reading: <?php echo formatRelativeTime($latest['recorded_at']); ?>
                 </p>
                 <?php else: ?>
                 <p class="text-muted mb-0">No recent data available</p>

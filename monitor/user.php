@@ -54,9 +54,9 @@ $firstName = explode(' ', $userName)[0];
             <h1 class="mb-1"><?php echo htmlspecialchars($userName); ?></h1>
             <p class="text-muted mb-3">Age <?php echo $monitoredUser ? $monitoredUser['user_age'] : 'N/A'; ?></p>
             
-            <?php if ($userData && isset($userData['latest_recording'])): ?>
+            <?php if ($userData && isset($userData['data'])): ?>
             <?php 
-            $latest = $userData['latest_recording'];
+            $latest = $userData['data'];
             $status = 'good';
             $statusText = 'is doing well';
             
@@ -77,14 +77,14 @@ $firstName = explode(' ', $userName)[0];
         </div>
     </div>
     
-    <?php if ($userData && isset($userData['latest_recording'])): ?>
-    <?php $latest = $userData['latest_recording']; ?>
+    <?php if ($userData && isset($userData['data'])): ?>
+    <?php $latest = $userData['data']; ?>
     
     <!-- Latest Reading Time -->
     <div class="text-center mb-4">
         <span class="text-muted">
             <i class="bi bi-clock me-1"></i>
-            Latest reading: <?php echo formatRelativeTime($latest['sit_time']); ?>
+            Latest reading: <?php echo formatRelativeTime($latest['recorded_at']); ?>
         </span>
     </div>
     

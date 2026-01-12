@@ -355,12 +355,12 @@ function escapeHtml(text) {
 }
 
 /* Dark mode tab colors */
-[data-bs-theme="dark"] .nav-tabs .nav-link {
+[data-theme="dark"] .nav-tabs .nav-link {
     color: rgba(255, 255, 255, 0.65);
 }
 
 /* Light mode tab colors */
-[data-bs-theme="light"] .nav-tabs .nav-link,
+[data-theme="light"] .nav-tabs .nav-link,
 .nav-tabs .nav-link {
     color: #555 !important;
 }
@@ -391,13 +391,13 @@ function escapeHtml(text) {
 }
 
 /* Dark mode badges */
-[data-bs-theme="dark"] .nav-tabs .nav-link .badge {
+[data-theme="dark"] .nav-tabs .nav-link .badge {
     background: rgba(255, 255, 255, 0.15) !important;
     color: rgba(255, 255, 255, 0.8) !important;
 }
 
 /* Light mode badges */
-[data-bs-theme="light"] .nav-tabs .nav-link .badge,
+[data-theme="light"] .nav-tabs .nav-link .badge,
 .nav-tabs .nav-link .badge {
     background: rgba(0, 0, 0, 0.08) !important;
     color: #666 !important;
@@ -414,7 +414,18 @@ function escapeHtml(text) {
 }
 
 .entity-row:hover {
-    background-color: rgba(106, 110, 255, 0.05);
+    background-color: var(--bg-hover);
+}
+
+/* Dark mode: ensure text remains readable on hover */
+[data-theme="dark"] .entity-row:hover td,
+[data-theme="dark"] .entity-row:hover .fw-medium,
+[data-theme="dark"] .entity-row:hover small {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .entity-row:hover .text-muted {
+    color: var(--text-secondary) !important;
 }
 
 .entity-row .btn {

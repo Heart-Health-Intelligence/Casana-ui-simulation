@@ -67,7 +67,7 @@ require_once __DIR__ . '/../includes/header.php';
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-start mb-2">
                     <div>
-                        <div class="fw-semibold"><?php echo formatDateTime($rec['sit_time']); ?></div>
+                        <div class="fw-semibold"><?php echo formatDateTime($rec['sit_time'], true, true); ?></div>
                         <div class="small text-muted">Duration: <?php echo formatDuration($rec['duration_seconds']); ?></div>
                     </div>
                     <?php if ($rec['htn']): ?>
@@ -79,8 +79,8 @@ require_once __DIR__ . '/../includes/header.php';
                 <div class="row g-2 text-center">
                     <div class="col-3">
                         <div class="small text-muted">BP</div>
-                        <div class="fw-semibold <?php echo $rec['htn'] ? 'text-danger' : ''; ?>">
-                            <?php echo $rec['bp_systolic']; ?>/<?php echo $rec['bp_diastolic']; ?>
+                        <div class="<?php echo $rec['htn'] ? 'text-danger' : ''; ?>">
+                            <?php echo formatBloodPressureStyled($rec['bp_systolic'], $rec['bp_diastolic'], $rec['htn']); ?>
                         </div>
                     </div>
                     <div class="col-3">
