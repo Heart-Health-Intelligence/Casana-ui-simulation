@@ -1,0 +1,43 @@
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.settings/
+
+# PHP specific
+/vendor/
+composer.lock
+*.phar
+
+# Logs and caches
+*.log
+/logs/
+/cache/
+/tmp/
+
+# Environment and config files (if added later)
+.env
+.env.local
+.env.*.local
+config.local.php
+
+# Uploaded files (if applicable)
+/uploads/
+/storage/
+
+# Debug files
+*.sql
+*.bak
+*.backup

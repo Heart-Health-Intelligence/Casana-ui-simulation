@@ -1,0 +1,967 @@
+/* ==========================================================================
+   Casana Component Styles
+   Shared UI components across all applications
+   ========================================================================== */
+
+/* ==========================================================================
+   Theme Toggle
+   ========================================================================== */
+
+.theme-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.theme-toggle:hover {
+    background: var(--bg-hover);
+}
+
+.theme-toggle-icon {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.theme-toggle .sun-icon {
+    display: none;
+}
+
+.theme-toggle .moon-icon {
+    display: block;
+}
+
+[data-theme="dark"] .theme-toggle .sun-icon {
+    display: block;
+}
+
+[data-theme="dark"] .theme-toggle .moon-icon {
+    display: none;
+}
+
+/* ==========================================================================
+   Role Selector Cards (Superuser Mode)
+   ========================================================================== */
+
+.role-card {
+    position: relative;
+    padding: var(--spacing-xl);
+    text-align: center;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    border: 2px solid transparent;
+}
+
+.role-card:hover {
+    border-color: var(--casana-purple);
+    transform: translateY(-4px);
+}
+
+.role-card.selected {
+    border-color: var(--casana-purple);
+    background-color: var(--bg-hover);
+}
+
+.role-card .role-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto var(--spacing-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-gradient-purple);
+    border-radius: var(--radius-xl);
+    color: white;
+    font-size: 1.75rem;
+}
+
+.role-card .role-title {
+    font-size: 1.25rem;
+    font-weight: var(--font-weight-semibold);
+    margin-bottom: var(--spacing-sm);
+}
+
+.role-card .role-description {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 0;
+}
+
+/* ==========================================================================
+   Entity Selector
+   ========================================================================== */
+
+.entity-selector {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+}
+
+.entity-selector .search-box {
+    position: relative;
+    margin-bottom: var(--spacing-md);
+}
+
+.entity-selector .search-box .bi {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+}
+
+.entity-selector .search-box input {
+    padding-left: 2.75rem;
+}
+
+.entity-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.entity-item {
+    display: flex;
+    align-items: center;
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    border: 1px solid transparent;
+}
+
+.entity-item:hover {
+    background-color: var(--bg-hover);
+}
+
+.entity-item.selected {
+    background-color: var(--bg-hover);
+    border-color: var(--casana-purple);
+}
+
+.entity-item .entity-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-full);
+    background: var(--bg-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: var(--spacing-md);
+    font-weight: var(--font-weight-semibold);
+    color: var(--casana-purple);
+}
+
+.entity-item .entity-info {
+    flex: 1;
+}
+
+.entity-item .entity-name {
+    font-weight: var(--font-weight-medium);
+    margin-bottom: 0;
+}
+
+.entity-item .entity-meta {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+/* ==========================================================================
+   Health Status Indicators
+   ========================================================================== */
+
+.status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+.status-dot.good {
+    background-color: var(--status-success);
+}
+
+.status-dot.warning {
+    background-color: var(--status-warning);
+}
+
+.status-dot.alert {
+    background-color: var(--status-danger);
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Health Status Badge */
+.health-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-full);
+    font-weight: var(--font-weight-medium);
+    font-size: 0.875rem;
+}
+
+.health-status-badge.stable {
+    background-color: rgba(0, 89, 75, 0.1);
+    color: var(--status-success);
+}
+
+.health-status-badge.improving {
+    background-color: rgba(212, 242, 115, 0.2);
+    color: var(--casana-green);
+}
+
+.health-status-badge.deteriorating {
+    background-color: rgba(194, 77, 112, 0.1);
+    color: var(--status-danger);
+}
+
+/* ==========================================================================
+   Blood Pressure Fraction Display
+   ========================================================================== */
+
+.bp-fraction {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.bp-fraction .bp-systolic {
+    font-size: 1.1em;
+}
+
+.bp-fraction .bp-divider {
+    width: 100%;
+    height: 2px;
+    background-color: currentColor;
+    margin: 2px 0;
+    opacity: 0.5;
+}
+
+.bp-fraction .bp-diastolic {
+    font-size: 0.9em;
+    opacity: 0.85;
+}
+
+.bp-fraction.text-danger {
+    color: var(--status-danger);
+}
+
+/* Large BP display for cards */
+.bp-fraction-lg {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1;
+}
+
+.bp-fraction-lg .bp-systolic {
+    font-size: 3rem;
+    font-weight: 700;
+}
+
+.bp-fraction-lg .bp-divider {
+    width: 80%;
+    height: 3px;
+    background-color: currentColor;
+    margin: 4px 0;
+    opacity: 0.4;
+    border-radius: 2px;
+}
+
+.bp-fraction-lg .bp-diastolic {
+    font-size: 1.5rem;
+    font-weight: 600;
+    opacity: 0.7;
+}
+
+/* ==========================================================================
+   Vital Signs Display
+   ========================================================================== */
+
+.vital-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--spacing-md);
+}
+
+.vital-display .vital-icon {
+    font-size: 1.5rem;
+    margin-bottom: var(--spacing-sm);
+    color: var(--casana-purple);
+}
+
+.vital-display .vital-value {
+    font-size: 2rem;
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+}
+
+.vital-display .vital-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.vital-display .vital-trend {
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-top: var(--spacing-xs);
+}
+
+/* Vital Grid */
+.vitals-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: var(--spacing-md);
+}
+
+/* Large Vital Card */
+.vital-card-lg {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-xl);
+    text-align: center;
+    border: 1px solid var(--border-color);
+}
+
+.vital-card-lg .vital-value {
+    font-size: 3rem;
+}
+
+/* ==========================================================================
+   Chart Containers
+   ========================================================================== */
+
+.chart-container {
+    position: relative;
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    border: 1px solid var(--border-color);
+}
+
+.chart-container .chart-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-md);
+}
+
+.chart-container .chart-title {
+    font-size: 1rem;
+    font-weight: var(--font-weight-semibold);
+    margin: 0;
+}
+
+.chart-container .chart-legend {
+    display: flex;
+    gap: var(--spacing-md);
+    font-size: 0.75rem;
+}
+
+.chart-legend-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.chart-legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+/* Sparkline container */
+.sparkline-container {
+    height: 40px;
+    width: 100px;
+}
+
+/* ==========================================================================
+   Alert Cards
+   ========================================================================== */
+
+.alert-card {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    border-left: 4px solid var(--status-danger);
+    margin-bottom: var(--spacing-md);
+}
+
+.alert-card .alert-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    background: rgba(194, 77, 112, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--status-danger);
+    flex-shrink: 0;
+}
+
+.alert-card .alert-content {
+    flex: 1;
+}
+
+.alert-card .alert-title {
+    font-weight: var(--font-weight-semibold);
+    margin-bottom: var(--spacing-xs);
+}
+
+.alert-card .alert-meta {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.alert-card .alert-time {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+/* ==========================================================================
+   Patient/User Cards
+   ========================================================================== */
+
+.patient-card {
+    display: flex;
+    align-items: center;
+    padding: var(--spacing-md);
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    transition: all var(--transition-fast);
+    cursor: pointer;
+}
+
+.patient-card:hover {
+    border-color: var(--casana-purple);
+    transform: translateX(4px);
+}
+
+.patient-card .patient-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-full);
+    background: var(--bg-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: var(--font-weight-semibold);
+    color: var(--casana-purple);
+    margin-right: var(--spacing-md);
+    flex-shrink: 0;
+}
+
+.patient-card .patient-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.patient-card .patient-name {
+    font-weight: var(--font-weight-medium);
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.patient-card .patient-meta {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.patient-card .patient-status {
+    flex-shrink: 0;
+    text-align: right;
+}
+
+/* ==========================================================================
+   Monitor Dashboard Cards
+   ========================================================================== */
+
+.monitor-user-card {
+    background: var(--bg-card);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-xl);
+    border: 1px solid var(--border-color);
+    text-align: center;
+    transition: all var(--transition-normal);
+}
+
+.monitor-user-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.monitor-user-card .user-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: var(--radius-full);
+    background: var(--bg-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto var(--spacing-md);
+    font-size: 2rem;
+    font-weight: var(--font-weight-bold);
+    color: var(--casana-purple);
+}
+
+.monitor-user-card .user-name {
+    font-size: 1.25rem;
+    font-weight: var(--font-weight-semibold);
+    margin-bottom: var(--spacing-xs);
+}
+
+.monitor-user-card .status-message {
+    font-size: 1.1rem;
+    margin-bottom: var(--spacing-md);
+}
+
+.monitor-user-card .status-message.good {
+    color: var(--status-success);
+}
+
+.monitor-user-card .status-message.warning {
+    color: var(--status-warning);
+}
+
+.monitor-user-card .status-message.alert {
+    color: var(--status-danger);
+}
+
+.monitor-user-card .last-activity {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+/* ==========================================================================
+   ECG Viewer
+   ========================================================================== */
+
+.ecg-viewer {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    border: 1px solid var(--border-color);
+}
+
+.ecg-viewer .ecg-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.ecg-viewer .ecg-canvas {
+    width: 100%;
+    height: 200px;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+}
+
+.ecg-viewer .ecg-controls {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-md);
+}
+
+/* ==========================================================================
+   Time Selector
+   ========================================================================== */
+
+.time-selector {
+    display: inline-flex;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-full);
+    padding: 4px;
+}
+
+.time-selector .time-option {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-full);
+    font-size: 0.875rem;
+    font-weight: var(--font-weight-medium);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    border: none;
+    background: transparent;
+}
+
+.time-selector .time-option:hover {
+    color: var(--casana-purple);
+}
+
+.time-selector .time-option.active {
+    background: var(--casana-purple);
+    color: white;
+}
+
+/* ==========================================================================
+   Search Results
+   ========================================================================== */
+
+.search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    max-height: 400px;
+    overflow-y: auto;
+    z-index: 100;
+}
+
+.search-results .search-result-item {
+    padding: var(--spacing-md);
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.search-results .search-result-item:last-child {
+    border-bottom: none;
+}
+
+.search-results .search-result-item:hover {
+    background: var(--bg-hover);
+}
+
+/* ==========================================================================
+   Empty State
+   ========================================================================== */
+
+.empty-state {
+    text-align: center;
+    padding: var(--spacing-xxl);
+}
+
+.empty-state .empty-icon {
+    font-size: 4rem;
+    color: var(--text-muted);
+    margin-bottom: var(--spacing-lg);
+}
+
+.empty-state .empty-title {
+    font-size: 1.25rem;
+    font-weight: var(--font-weight-semibold);
+    margin-bottom: var(--spacing-sm);
+}
+
+.empty-state .empty-description {
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-lg);
+}
+
+/* ==========================================================================
+   Loading Spinner
+   ========================================================================== */
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.loading-card {
+    background: var(--bg-card);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-xl);
+    text-align: center;
+}
+
+.loading-card .spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid var(--border-color);
+    border-top-color: var(--casana-purple);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto var(--spacing-md);
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ==========================================================================
+   Settings Panel
+   ========================================================================== */
+
+.settings-group {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-md);
+    border: 1px solid var(--border-color);
+}
+
+.settings-group .settings-title {
+    font-weight: var(--font-weight-semibold);
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.settings-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-md) 0;
+    border-bottom: 1px solid var(--border-color-light);
+}
+
+.settings-item:last-child {
+    border-bottom: none;
+}
+
+.settings-item .settings-label {
+    font-weight: var(--font-weight-medium);
+}
+
+.settings-item .settings-description {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+/* Toggle Switch */
+.toggle-switch {
+    position: relative;
+    width: 48px;
+    height: 26px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-switch .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--bg-tertiary);
+    transition: var(--transition-fast);
+    border-radius: var(--radius-full);
+}
+
+.toggle-switch .slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: var(--transition-fast);
+    border-radius: 50%;
+}
+
+.toggle-switch input:checked + .slider {
+    background-color: var(--casana-purple);
+}
+
+.toggle-switch input:checked + .slider:before {
+    transform: translateX(22px);
+}
+
+/* ==========================================================================
+   Navigation Sidebar (Provider App)
+   ========================================================================== */
+
+.sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 260px;
+    background: var(--sidebar-bg);
+    border-right: 1px solid var(--border-color);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar .sidebar-header {
+    padding: var(--spacing-lg);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.sidebar .sidebar-nav {
+    flex: 1;
+    padding: var(--spacing-md);
+    overflow-y: auto;
+}
+
+.sidebar .nav-item {
+    margin-bottom: var(--spacing-xs);
+}
+
+.sidebar .nav-link {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    font-weight: var(--font-weight-medium);
+    transition: all var(--transition-fast);
+}
+
+.sidebar .nav-link:hover {
+    background: var(--bg-hover);
+    color: var(--casana-purple);
+}
+
+.sidebar .nav-link.active {
+    background: var(--casana-purple);
+    color: white;
+}
+
+.sidebar .nav-link .bi {
+    font-size: 1.25rem;
+}
+
+.sidebar .sidebar-footer {
+    padding: var(--spacing-md);
+    border-top: 1px solid var(--border-color);
+}
+
+/* Main content with sidebar */
+.main-with-sidebar {
+    margin-left: 260px;
+    min-height: 100vh;
+    padding: var(--spacing-lg);
+}
+
+@media (max-width: 992px) {
+    .sidebar {
+        transform: translateX(-100%);
+        transition: transform var(--transition-normal);
+    }
+    
+    .sidebar.show {
+        transform: translateX(0);
+    }
+    
+    .main-with-sidebar {
+        margin-left: 0;
+    }
+}
+
+/* ==========================================================================
+   Mobile Navigation
+   ========================================================================== */
+
+.mobile-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg-card);
+    border-top: 1px solid var(--border-color);
+    display: none;
+    z-index: 1000;
+}
+
+.mobile-nav .nav {
+    display: flex;
+    justify-content: space-around;
+}
+
+.mobile-nav .nav-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--spacing-sm) var(--spacing-md);
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+.mobile-nav .nav-link .bi {
+    font-size: 1.25rem;
+    margin-bottom: 2px;
+}
+
+.mobile-nav .nav-link.active {
+    color: var(--casana-purple);
+}
+
+@media (max-width: 768px) {
+    .mobile-nav {
+        display: block;
+    }
+    
+    body {
+        padding-bottom: 60px;
+    }
+}
+
+/* ==========================================================================
+   Responsive Utilities
+   ========================================================================== */
+
+.hide-mobile {
+    display: block;
+}
+
+.show-mobile {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .hide-mobile {
+        display: none;
+    }
+    
+    .show-mobile {
+        display: block;
+    }
+}
